@@ -1,0 +1,6 @@
+{
+  "name": "Silk Print Gráfica",
+  "description": "Plataforma completa de e-commerce e serviços gráficos com configurador técnico de impressão, cálculo de frete, balcões de retirada, orçamento personalizado e modo manutenção configurável.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
