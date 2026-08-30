@@ -4,7 +4,7 @@
     {
       "parameters": {
         "httpMethod": "POST",
-        "path": "evolution-webhook-proxy",
+        "path": "silkprint-site",
         "responseMode": "responseNode",
         "options": {}
       },
@@ -16,7 +16,7 @@
         -680,
         0
       ],
-      "webhookId": "evolution-webhook-proxy"
+      "webhookId": "silkprint-site"
     },
     {
       "parameters": {

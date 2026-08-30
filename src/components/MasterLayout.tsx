@@ -37,9 +37,8 @@ import {
 import { formatCurrency } from '../lib/utils';
 
 export const MasterLayout: React.FC = () => {
-  // Read initial maintenance mode from environment variable VITE_MAINTENANCE_MODE
-  const envMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
-  const [isMaintenance, setIsMaintenance] = useState<boolean>(envMaintenance);
+  // Read maintenance mode strictly from environment variable VITE_MAINTENANCE_MODE
+  const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
 
   // Application State
   const [activeView, setActiveView] = useState<ActiveView>('home');
@@ -94,32 +93,9 @@ export const MasterLayout: React.FC = () => {
   const cartTotal = cartItems.reduce((acc, item) => acc + item.totalPrice, 0);
 
   // 🛑 1. MAINTENANCE MODE GATEWAY
-  // If maintenance mode is active (via env or toggle), render ONLY the MaintenancePage
+  // If maintenance mode is active (VITE_MAINTENANCE_MODE="true"), render ONLY the MaintenancePage
   if (isMaintenance) {
-    return (
-      <div className="relative min-h-screen">
-        <MaintenancePage 
-          onToggleMaintenance={() => setIsMaintenance(false)}
-          isMaintenanceEnv={envMaintenance}
-        />
-
-        {/* Floating Demo Mode Switcher for the user in preview */}
-        <div className="fixed bottom-4 right-4 z-50">
-          <div className="bg-slate-800/95 text-white border border-slate-700 shadow-2xl p-2.5 rounded-2xl flex items-center gap-3 backdrop-blur-md text-xs">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse" />
-              <span className="font-bold">Modo Manutenção (Ativo)</span>
-            </div>
-            <button
-              onClick={() => setIsMaintenance(false)}
-              className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold transition-all"
-            >
-              Testar Loja Ativa
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <MaintenancePage />;
   }
 
   // 🛍️ 2. FULL E-COMMERCE & INSTITUTIONAL STORE
@@ -129,23 +105,6 @@ export const MasterLayout: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 selection:bg-cyan-500 selection:text-white" id="main-site-container">
-      
-      {/* Floating Demo Mode Indicator */}
-      <div className="fixed bottom-4 right-4 z-40">
-        <button
-          onClick={() => setIsMaintenance(true)}
-          className="bg-slate-900/90 hover:bg-slate-900 text-slate-200 hover:text-white border border-slate-700 shadow-xl px-3.5 py-2 rounded-full flex items-center gap-2 text-xs backdrop-blur-md transition-all group"
-          title="Ativar visualização do Modo Manutenção"
-          id="btn-switch-to-maintenance"
-        >
-          <span className="w-2 h-2 rounded-full bg-emerald-400" />
-          <span className="font-semibold text-[11px]">Loja Online Ativa</span>
-          <span className="text-slate-400 group-hover:text-cyan-300 font-mono text-[10px] bg-slate-800 px-1.5 py-0.5 rounded">
-            Simular Manutenção
-          </span>
-        </button>
-      </div>
-
       {/* Main Header */}
       <Header
         activeView={activeView}

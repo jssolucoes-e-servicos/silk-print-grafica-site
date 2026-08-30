@@ -103,7 +103,7 @@ async function sendAdminNotificationEmail(lead: QuoteLead): Promise<'sent_resend
 
 // Helper to trigger n8n Webhook for Evolution API WhatsApp alert & Google Sheets / Database recording
 async function triggerN8nWebhook(lead: QuoteLead): Promise<'dispatched' | 'skipped_no_url' | 'failed'> {
-  const webhookUrl = process.env.N8N_WEBHOOK_URL || 'https://main-n8n.qgymrf.easypanel.host/webhook/evolution-webhook-proxy';
+  const webhookUrl = process.env.N8N_WEBHOOK_URL || 'https://main-n8n.qgymrf.easypanel.host/webhook/silkprint-site';
   if (!webhookUrl || webhookUrl.includes('seuservidor.com')) {
     console.log(`[n8n Automation] N8N_WEBHOOK_URL not configured. Skipping webhook post.`);
     return 'skipped_no_url';

@@ -18,15 +18,9 @@ import {
 } from 'lucide-react';
 import { formatPhone } from '../lib/utils';
 
-interface MaintenancePageProps {
-  onToggleMaintenance?: () => void;
-  isMaintenanceEnv?: boolean;
-}
+interface MaintenancePageProps {}
 
-export const MaintenancePage: React.FC<MaintenancePageProps> = ({
-  onToggleMaintenance,
-  isMaintenanceEnv = false,
-}) => {
+export const MaintenancePage: React.FC<MaintenancePageProps> = () => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -144,22 +138,10 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({
         <Logo variant="full" size="md" theme="light" />
 
         <div className="flex items-center gap-3">
-          <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
+          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
             <span>Manutenção Programada</span>
           </div>
-
-          {onToggleMaintenance && (
-            <button
-              onClick={onToggleMaintenance}
-              className="text-xs px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition-colors flex items-center gap-1.5"
-              title="Alternar entre modo manutenção e modo loja para testes"
-              id="btn-toggle-maintenance-demo"
-            >
-              <Printer className="w-3.5 h-3.5 text-cyan-400" />
-              <span>Ver Loja Completa</span>
-            </button>
-          )}
         </div>
       </header>
 
