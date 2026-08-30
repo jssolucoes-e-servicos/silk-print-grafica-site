@@ -4,7 +4,7 @@ interface LogoProps {
   variant?: 'full' | 'icon' | 'text';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
-  theme?: 'dark' | 'light' | 'auto';
+  theme?: 'dark' | 'light' | 'auto'; // 'dark' = for dark backgrounds (white text, cyan subtitle), 'light' = for light backgrounds (black text, slate subtitle)
 }
 
 export const Logo: React.FC<LogoProps> = ({
@@ -13,12 +13,12 @@ export const Logo: React.FC<LogoProps> = ({
   className = '',
   theme = 'auto',
 }) => {
-  // Dimensions for the CMYK cube
-  const cubeDimensions = {
-    sm: { width: 28, height: 28 },
-    md: { width: 40, height: 40 },
-    lg: { width: 54, height: 54 },
-    xl: { width: 72, height: 72 },
+  // Dimensions for the redesigned CMYK isometric emblem
+  const cubeDimensions进 = {
+    sm: { width: 30, height: 30 },
+    md: { width: 44, height: 44 },
+    lg: { width: 56, height: 56 },
+    xl: { width: 76, height: 76 },
   }[size];
 
   const textColorClass = 
@@ -30,68 +30,45 @@ export const Logo: React.FC<LogoProps> = ({
 
   const subtitleColorClass = 
     theme === 'light' 
-      ? 'text-slate-300' 
+      ? 'text-[#00a8e8]' 
       : theme === 'dark' 
-      ? 'text-slate-600' 
-      : 'text-slate-600 dark:text-slate-400';
+      ? 'text-[#1e293b]' 
+      : 'text-[#1e293b] dark:text-[#00a8e8]';
 
+  // Exact Vector of the Redesigned SilkPrint Isometric 4-Color Cube
   const CubeIcon = (
     <svg
-      width={cubeDimensions.width}
-      height={cubeDimensions.height}
+      width={cubeDimensions进.width}
+      height={cubeDimensions进.height}
       viewBox="0 0 200 200"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className="shrink-0 transition-transform duration-300 hover:scale-105"
-      id="cmyk-cube-emblem"
+      id="silkprint-brand-emblem"
     >
-      {/* 
-        Isometric 3D Cube / Hexagon representing CMYK:
-        Top face: Magenta
-        Left face: Cyan
-        Right face: Yellow
-        Black outline & dividers
-      */}
-      {/* Outer Hexagon border & background */}
+      {/* Top-Left Face: Vivid Magenta / Crimson (#b8004f) */}
       <polygon
-        points="100,12 180,58 180,148 100,194 20,148 20,58"
-        stroke="#1e293b"
-        strokeWidth="14"
-        strokeLinejoin="round"
-        strokeLinecap="round"
+        points="95,16 28,55 95,94"
+        fill="#b8004f"
       />
 
-      {/* Top Face: Magenta (#e6007e) */}
+      {/* Top-Right Face: Deep Burgundy / Dark Wine (#7b0032) */}
       <polygon
-        points="100,16 174,58 100,102 26,58"
-        fill="#e6007e"
-        stroke="#1e293b"
-        strokeWidth="12"
-        strokeLinejoin="round"
+        points="105,16 105,94 172,55"
+        fill="#7b0032"
       />
 
-      {/* Left Face: Cyan (#00a0e9) */}
+      {/* Bottom-Left Face: Process Cyan (#0082c8) */}
       <polygon
-        points="26,58 100,102 100,190 26,144"
-        fill="#00a0e9"
-        stroke="#1e293b"
-        strokeWidth="12"
-        strokeLinejoin="round"
+        points="22,65 91,104 91,184 22,145"
+        fill="#0082c8"
       />
 
-      {/* Right Face: Yellow (#fff100) */}
+      {/* Bottom-Right Face: Process Yellow (#f5c200) */}
       <polygon
-        points="100,102 174,58 174,144 100,190"
-        fill="#fff100"
-        stroke="#1e293b"
-        strokeWidth="12"
-        strokeLinejoin="round"
+        points="109,104 178,65 178,145 109,184"
+        fill="#f5c200"
       />
-
-      {/* Center 3D Y-Joint Lines */}
-      <line x1="100" y1="102" x2="100" y2="190" stroke="#1e293b" strokeWidth="12" strokeLinecap="round" />
-      <line x1="100" y1="102" x2="26" y2="58" stroke="#1e293b" strokeWidth="12" strokeLinecap="round" />
-      <line x1="100" y1="102" x2="174" y2="58" stroke="#1e293b" strokeWidth="12" strokeLinecap="round" />
     </svg>
   );
 
@@ -100,27 +77,29 @@ export const Logo: React.FC<LogoProps> = ({
   }
 
   const textSizes = {
-    sm: { title: 'text-lg', sub: 'text-[9px] tracking-wider' },
-    md: { title: 'text-2xl', sub: 'text-xs tracking-widest' },
-    lg: { title: 'text-3xl', sub: 'text-sm tracking-widest' },
-    xl: { title: 'text-4xl', sub: 'text-base tracking-widest' },
+    sm: { title: 'text-xl', sub: 'text-[9px] tracking-[0.38em]' },
+    md: { title: 'text-2xl sm:text-3xl', sub: 'text-[10px] sm:text-[11px] tracking-[0.42em]' },
+    lg: { title: 'text-3xl sm:text-4xl', sub: 'text-xs sm:text-sm tracking-[0.44em]' },
+    xl: { title: 'text-4xl sm:text-5xl', sub: 'text-sm sm:text-base tracking-[0.46em]' },
   }[size];
 
   return (
-    <div className={`inline-flex items-center gap-2.5 select-none ${className}`}>
+    <div className={`inline-flex items-center gap-3 select-none ${className}`} id="brand-logo-container">
       {variant !== 'text' && CubeIcon}
-      <div className="flex flex-col leading-none">
+      <div className="flex flex-col leading-none justify-center">
+        {/* Main Brand Title: SilkPrint */}
         <span 
-          className={`font-black italic font-heading tracking-tight ${textSizes.title} ${textColorClass} flex items-center gap-1`}
-          style={{ fontFamily: "'Outfit', 'Plus Jakarta Sans', sans-serif" }}
+          className={`font-black tracking-tight ${textSizes.title} ${textColorClass}`}
+          style={{ fontFamily: "'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" }}
         >
-          <span>Silk</span>
-          <span className="text-cyan-500">Print</span>
+          SilkPrint
         </span>
-        <span className={`font-semibold uppercase ${textSizes.sub} ${subtitleColorClass} flex items-center gap-1 mt-0.5`}>
-          <span>GRÁFICA</span>
-          <span className="inline-block w-1.5 h-1.5 rounded-full bg-magenta-500" style={{ backgroundColor: '#e6007e' }}></span>
-          <span className="text-yellow-500 font-bold">ONLINE</span>
+        {/* Brand Subtitle: G R Á F I C A with wide tracking matching brand identity */}
+        <span 
+          className={`font-extrabold uppercase ${textSizes.sub} ${subtitleColorClass} mt-1.5 pl-0.5`}
+          style={{ fontFamily: "'Outfit', 'Plus Jakarta Sans', system-ui, sans-serif" }}
+        >
+          G R Á F I C A
         </span>
       </div>
     </div>
