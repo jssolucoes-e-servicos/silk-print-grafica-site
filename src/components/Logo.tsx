@@ -4,42 +4,40 @@ interface LogoProps {
   variant?: 'full' | 'icon' | 'text';
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
-  theme?: 'dark' | 'light' | 'auto'; // 'dark' = for dark backgrounds (white text, cyan subtitle), 'light' = for light backgrounds (black text, slate subtitle)
+  theme?: 'dark' | 'light' | 'auto'; // 'light' = for light/white backgrounds (dark text 'SilkPrint' and dark subtitle), 'dark' = for dark backgrounds (white text 'SilkPrint' and cyan subtitle)
 }
 
 export const Logo: React.FC<LogoProps> = ({
   variant = 'full',
   size = 'md',
   className = '',
-  theme = 'auto',
+  theme = 'light',
 }) => {
   // Dimensions for the redesigned CMYK isometric emblem
-  const cubeDimensions进 = {
+  const cubeDimensions = {
     sm: { width: 30, height: 30 },
     md: { width: 44, height: 44 },
     lg: { width: 56, height: 56 },
     xl: { width: 76, height: 76 },
   }[size];
 
+  // For light backgrounds (white header): dark text (#18181b / text-slate-900) and dark slate subtitle (#1e293b)
+  // For dark backgrounds (dark footer/maintenance): white text (text-white) and bright cyan subtitle (#00a8e8)
   const textColorClass = 
-    theme === 'light' 
+    theme === 'dark' 
       ? 'text-white' 
-      : theme === 'dark' 
-      ? 'text-slate-900' 
-      : 'text-slate-900 dark:text-white';
+      : 'text-slate-900';
 
   const subtitleColorClass = 
-    theme === 'light' 
+    theme === 'dark' 
       ? 'text-[#00a8e8]' 
-      : theme === 'dark' 
-      ? 'text-[#1e293b]' 
-      : 'text-[#1e293b] dark:text-[#00a8e8]';
+      : 'text-slate-800';
 
   // Exact Vector of the Redesigned SilkPrint Isometric 4-Color Cube
   const CubeIcon = (
     <svg
-      width={cubeDimensions进.width}
-      height={cubeDimensions进.height}
+      width={cubeDimensions.width}
+      height={cubeDimensions.height}
       viewBox="0 0 200 200"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

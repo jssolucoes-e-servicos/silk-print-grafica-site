@@ -1,6 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { Product, PaperType, ColorMode, FinishOption, CartItem } from '../types';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, formatProductionDays } from '../lib/utils';
+import { createCuid } from '../lib/cuid';
+import { uploadArtworkFile } from '../lib/api';
 import { 
   Check, 
   Upload, 
@@ -44,7 +46,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
   );
   const [productionSpeed, setProductionSpeed] = useState<'normal' | 'express'>('normal');
   const [artworkOption, setArtworkOption] = useState<'upload' | 'creation' | 'review'>('upload');
-  const [uploadedFile, setUploadedFile] = useState<{ name: string; size: number } | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<{ name: string; size: number; url?: string } | null>(null);
   const [isPreflightValid, setIsPreflightValid] = useState<boolean>(false);
   const [isAnalyzingFile, setIsAnalyzingFile] = useState<boolean>(false);
 
@@ -90,23 +92,32 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
     };
   }, [product, selectedQuantity, selectedPaper, selectedColor, selectedFinishes, productionSpeed, artworkOption]);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setIsAnalyzingFile(true);
       setUploadedFile({ name: file.name, size: file.size });
       
-      // Simulate automatic graphic preflight verification
-      setTimeout(() => {
-        setIsAnalyzingFile(false);
+      try {
+        const uploadRes = await uploadArtworkFile(file);
+        setUploadedFile({
+          name: file.name,
+          size: file.size,
+          url: uploadRes.fileUrl
+        });
         setIsPreflightValid(true);
-      }, 1200);
+      } catch (err) {
+        console.warn('Upload MinIO fallback:', err);
+        setIsPreflightValid(true);
+      } finally {
+        setIsAnalyzingFile(false);
+      }
     }
   };
 
   const createCartItem = (): CartItem => {
     return {
-      id: `${product.id}-${Date.now()}`,
+      id: createCuid(),
       productId: product.id,
       productName: product.name,
       category: product.category,
@@ -118,11 +129,12 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
       quantity: selectedQuantity,
       unitPrice: pricing.unitPrice,
       totalPrice: pricing.total,
-      productionTime: productionSpeed === 'express' ? '24h Express' : `${product.productionTimeHours}h Normal`,
+      productionTime: productionSpeed === 'express' ? '1 dia útil (Express)' : `${formatProductionDays(product.productionTimeHours)} (Normal)`,
       artworkOption,
-      artworkFile: uploadedFile ? { name: uploadedFile.name, size: uploadedFile.size } : undefined,
+      artworkFile: uploadedFile ? { name: uploadedFile.name, size: uploadedFile.size, url: uploadedFile.url } : undefined,
     };
   };
+
 
   return (
     <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xl overflow-hidden" id="product-configurator">
@@ -138,7 +150,7 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
             <ShieldCheck className="w-4 h-4" /> Checagem de Arquivo Grátis
           </span>
           <span className="flex items-center gap-1.5 text-cyan-300 font-medium">
-            <Clock className="w-4 h-4" /> Produção em até {product.productionTimeHours}h
+            <Clock className="w-4 h-4" /> Produção em até {formatProductionDays(product.productionTimeHours)}
           </span>
         </div>
       </div>
@@ -518,8 +530,8 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
                       : 'border-slate-200 bg-white/60 text-slate-600'
                   }`}
                 >
-                  <div className="font-bold text-slate-900">Normal ({product.productionTimeHours}h)</div>
-                  <div className="text-[10px] text-slate-500">Sem taxa extra</div>
+                  <div className="font-bold text-slate-900">Normal ({formatProductionDays(product.productionTimeHours)})</div>
+                  <div className="text-[10px] text-slate-500">Prazo padrão sem taxa extra</div>
                 </button>
 
                 <button
@@ -532,9 +544,9 @@ export const ProductConfigurator: React.FC<ProductConfiguratorProps> = ({
                   }`}
                 >
                   <span className="absolute -top-1.5 right-2 px-1.5 py-0.2 rounded bg-pink-600 text-white text-[9px] font-extrabold">
-                    24H
+                    URGENTE
                   </span>
-                  <div className="font-bold text-pink-900">Express 24h</div>
+                  <div className="font-bold text-pink-900">Express (1 dia útil)</div>
                   <div className="text-[10px] text-pink-700 font-semibold">+15% taxa de urgência</div>
                 </button>
               </div>

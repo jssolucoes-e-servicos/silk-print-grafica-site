@@ -1,6 +1,6 @@
 import React from 'react';
 import { Product } from '../types';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, formatProductionDays } from '../lib/utils';
 import { Clock, ShieldCheck, ArrowRight, Zap, Sparkles } from 'lucide-react';
 
 interface ProductCardProps {
@@ -9,8 +9,12 @@ interface ProductCardProps {
 }
 
 export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) => {
-  const lowestPriceTier = product.quantities[0];
-  const mostPopularTier = product.quantities.find(q => q.popular) || product.quantities[product.quantities.length - 1];
+  const quantities = product.quantities || [];
+  const lowestPriceTier = quantities[0];
+  const mostPopularTier = quantities.find(q => q.popular) || quantities[quantities.length - 1];
+
+  const firstPaper = (product.papers && product.papers.length > 0) ? product.papers[0] : null;
+  const firstColorMode = (product.colorModes && product.colorModes.length > 0) ? product.colorModes[0] : null;
 
   return (
     <div 
@@ -26,22 +30,26 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
             <span className="font-heading">{product.badge}</span>
           </span>
         )}
-        {product.productionTimeHours <= 24 && (
-          <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-pink-600 text-white shadow-sm flex items-center gap-0.5">
-            <Zap className="w-2.5 h-2.5 fill-current" />
-            <span className="font-heading">24 HORAS</span>
-          </span>
-        )}
+        <span className="px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider bg-cyan-700 text-white shadow-sm flex items-center gap-1">
+          <Clock className="w-2.5 h-2.5" />
+          <span className="font-heading">{formatProductionDays(product.productionTimeHours).toUpperCase()}</span>
+        </span>
       </div>
 
       {/* Product Image Container */}
       <div className="relative aspect-[4/3] bg-slate-100 overflow-hidden">
-        <img
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          loading="lazy"
-        />
+        {product.image ? (
+          <img
+            src={product.image}
+            alt={product.name}
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-slate-100 text-slate-400 font-bold text-sm font-heading">
+            Silk Print Gráfica
+          </div>
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
           <span className="text-white text-xs font-black uppercase tracking-wider flex items-center gap-1 font-heading">
             <span>Personalizar & Calcular</span>
@@ -54,27 +62,33 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
       <div className="p-4 sm:p-5 flex-1 flex flex-col justify-between space-y-4">
         <div>
           <div className="text-[11px] font-black text-cyan-600 uppercase tracking-wider mb-1 font-heading">
-            {product.category}
+            {product.category || 'Gráfica'}
           </div>
           <h3 className="font-black text-base sm:text-lg text-slate-900 leading-snug group-hover:text-cyan-600 transition-colors tracking-tight font-heading">
             {product.name}
           </h3>
           <p className="text-xs text-slate-500 line-clamp-2 mt-1.5 leading-relaxed font-normal">
-            {product.shortDescription}
+            {product.shortDescription || product.description}
           </p>
         </div>
 
         {/* Paper & Specs tags */}
         <div className="flex flex-wrap gap-1.5 text-[10px] text-slate-700 font-bold">
-          <span className="px-2 py-0.5 bg-slate-100/90 rounded border border-slate-200/60">
-            {product.papers[0]?.name.split(' ')[0]} {product.papers[0]?.weight}
-          </span>
-          <span className="px-2 py-0.5 bg-slate-100/90 rounded border border-slate-200/60">
-            {product.defaultFormat}
-          </span>
-          <span className="px-2 py-0.5 bg-slate-100/90 rounded border border-slate-200/60">
-            {product.colorModes[0]?.code}
-          </span>
+          {firstPaper && (
+            <span className="px-2 py-0.5 bg-slate-100/90 rounded border border-slate-200/60">
+              {firstPaper.name?.split(' ')[0]} {firstPaper.weight}
+            </span>
+          )}
+          {product.defaultFormat && (
+            <span className="px-2 py-0.5 bg-slate-100/90 rounded border border-slate-200/60">
+              {product.defaultFormat}
+            </span>
+          )}
+          {firstColorMode && (
+            <span className="px-2 py-0.5 bg-slate-100/90 rounded border border-slate-200/60">
+              {firstColorMode.code}
+            </span>
+          )}
         </div>
 
         {/* Price Box */}
@@ -82,7 +96,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onSelect }) =
           <div>
             <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">A partir de</div>
             <div className="text-xl sm:text-2xl font-black text-slate-950 tracking-tight font-heading">
-              {formatCurrency(lowestPriceTier ? lowestPriceTier.totalPrice : product.basePrice)}
+              {formatCurrency(lowestPriceTier ? lowestPriceTier.totalPrice : (product.basePrice || 0))}
             </div>
             <div className="text-[10px] text-emerald-600 font-bold">
               no PIX com 5% de desconto

@@ -15,9 +15,10 @@ import { AboutPage } from './pages/AboutPage';
 import { HowToBuyPage } from './pages/HowToBuyPage';
 import { HelpCenterPage } from './pages/HelpCenterPage';
 import { ContactPage } from './pages/ContactPage';
+import { AdminERPPage } from './pages/AdminERPPage';
 
-import { PRODUCTS, CATEGORIES } from '../data/products';
-import { Product, CartItem, ActiveView } from '../types';
+import { Product, CartItem, ActiveView, Category, BalcaoRetirada } from '../types';
+import { getCatalog } from '../lib/api';
 import { 
   Zap, 
   ShieldCheck, 
@@ -32,7 +33,9 @@ import {
   Printer, 
   CheckCircle2, 
   SlidersHorizontal,
-  Flame
+  Flame,
+  Loader2,
+  PackageX
 } from 'lucide-react';
 import { formatCurrency } from '../lib/utils';
 
@@ -40,11 +43,15 @@ export const MasterLayout: React.FC = () => {
   // Read maintenance mode strictly from environment variable VITE_MAINTENANCE_MODE
   const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
 
-  // Application State
+  // Application State directly from PostgreSQL database
+  const [productsList, setProductsList] = useState<Product[]>([]);
+  const [categoriesList, setCategoriesList] = useState<Category[]>([]);
+  const [pickupPointsList, setPickupPointsList] = useState<BalcaoRetirada[]>([]);
   const [activeView, setActiveView] = useState<ActiveView>('home');
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(PRODUCTS[0]);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [isLoadingCatalog, setIsLoadingCatalog] = useState(true);
 
   // Modals visibility
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -56,6 +63,40 @@ export const MasterLayout: React.FC = () => {
 
   // Category filter on home page
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('TODOS');
+
+  // Function to refresh catalog from real PostgreSQL DB
+  const refreshCatalog = async () => {
+    try {
+      setIsLoadingCatalog(true);
+      const catalog = await getCatalog();
+      if (catalog) {
+        const prods = catalog.products || [];
+        const cats = catalog.categories || [];
+        const balcoes = catalog.pickupPoints || [];
+
+        setProductsList(prods);
+        setCategoriesList(cats);
+        setPickupPointsList(balcoes);
+
+        if (prods.length > 0) {
+          setSelectedProduct(prev => {
+            if (!prev) return prods[0];
+            const found = prods.find(p => p.id === prev.id || p.slug === prev.slug);
+            return found || prods[0];
+          });
+        }
+      }
+    } catch (err) {
+      console.warn('[MasterLayout] Error loading catalog from database:', err);
+    } finally {
+      setIsLoadingCatalog(false);
+    }
+  };
+
+  // Sync with real database on mount
+  useEffect(() => {
+    refreshCatalog();
+  }, []);
 
   // Scroll to top when view changes
   useEffect(() => {
@@ -100,30 +141,36 @@ export const MasterLayout: React.FC = () => {
 
   // 🛍️ 2. FULL E-COMMERCE & INSTITUTIONAL STORE
   const filteredCatalog = selectedCategoryFilter === 'TODOS'
-    ? PRODUCTS
-    : PRODUCTS.filter(p => p.categorySlug === selectedCategoryFilter);
+    ? productsList
+    : productsList.filter(p => p.categorySlug === selectedCategoryFilter);
+
+  const featuredProduct = productsList.find(p => p.popular) || productsList[0] || null;
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-50 text-slate-900 selection:bg-cyan-500 selection:text-white" id="main-site-container">
-      {/* Main Header */}
-      <Header
-        activeView={activeView}
-        setActiveView={setActiveView}
-        cartCount={cartItems.length}
-        cartTotal={cartTotal}
-        onOpenCart={() => setIsCartOpen(true)}
-        onSelectProduct={(product) => {
-          setSelectedProduct(product);
-          setActiveView('product-details');
-        }}
-        onOpenGabaritos={() => setIsGabaritosOpen(true)}
-        onOpenBalcoes={() => setIsBalcoesOpen(true)}
-        onOpenQuote={() => setIsQuoteOpen(true)}
-        onOpenTracking={() => setIsTrackingOpen(true)}
-        allProducts={PRODUCTS}
-      />
+    <div className={`min-h-screen flex flex-col justify-between ${activeView === 'admin' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} selection:bg-cyan-500 selection:text-white`} id="main-site-container">
+      {/* Main Header (Hidden when in ERP system) */}
+      {activeView !== 'admin' && (
+        <Header
+          activeView={activeView}
+          setActiveView={setActiveView}
+          cartCount={cartItems.length}
+          cartTotal={cartTotal}
+          onOpenCart={() => setIsCartOpen(true)}
+          onSelectProduct={(product) => {
+            setSelectedProduct(product);
+            setActiveView('product-details');
+          }}
+          onOpenGabaritos={() => setIsGabaritosOpen(true)}
+          onOpenBalcoes={() => setIsBalcoesOpen(true)}
+          onOpenQuote={() => setIsQuoteOpen(true)}
+          onOpenTracking={() => setIsTrackingOpen(true)}
+          allProducts={productsList}
+          categories={categoriesList}
+        />
+      )}
 
       {/* Main Content Router */}
+
       <main className="flex-1">
         
         {/* VIEW 1: HOME PAGE */}
@@ -149,20 +196,22 @@ export const MasterLayout: React.FC = () => {
                   </h1>
 
                   <p className="text-slate-300 text-sm sm:text-base leading-relaxed max-w-xl">
-                    Cartões de visita, panfletos, adesivos, banners e brindes com a maior gama de acabamentos e mais de <strong>5.000 balcões de retirada</strong> em todo o Brasil.
+                    Materiais gráficos com a maior gama de acabamentos, produção expressa e balcões de retirada credenciados em todo o Brasil.
                   </p>
 
                   <div className="flex flex-wrap items-center gap-3 pt-2">
-                    <button
-                      onClick={() => {
-                        setSelectedProduct(PRODUCTS[0]);
-                        setActiveView('product-details');
-                      }}
-                      className="px-6 py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm transition-all shadow-xl shadow-cyan-500/20 flex items-center gap-2 active:scale-95"
-                    >
-                      <span>Configurar Cartão Mais Vendido</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
+                    {featuredProduct && (
+                      <button
+                        onClick={() => {
+                          setSelectedProduct(featuredProduct);
+                          setActiveView('product-details');
+                        }}
+                        className="px-6 py-3.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-sm transition-all shadow-xl shadow-cyan-500/20 flex items-center gap-2 active:scale-95"
+                      >
+                        <span>Personalizar {featuredProduct.name}</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
+                    )}
 
                     <button
                       onClick={() => setIsQuoteOpen(true)}
@@ -184,55 +233,80 @@ export const MasterLayout: React.FC = () => {
                     </div>
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4 text-yellow-400 shrink-0" />
-                      <span>5.000+ Balcões no Brasil</span>
+                      <span>{pickupPointsList.length > 0 ? `${pickupPointsList.length}+ Balcões` : 'Balcões Credenciados'}</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Featured Configurator Preview Card */}
                 <div className="lg:col-span-5">
-                  <div className="bg-slate-900/90 rounded-3xl border border-slate-700/80 p-6 shadow-2xl backdrop-blur-xl space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-pink-500/20 text-pink-400 border border-pink-500/30 flex items-center gap-1">
-                        <Flame className="w-3.5 h-3.5" /> DESTAQUE DA SEMANA
-                      </span>
-                      <span className="text-xs text-emerald-400 font-bold">5% OFF no PIX</span>
-                    </div>
+                  {featuredProduct ? (
+                    <div className="bg-slate-900/90 rounded-3xl border border-slate-700/80 p-6 shadow-2xl backdrop-blur-xl space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-pink-500/20 text-pink-400 border border-pink-500/30 flex items-center gap-1">
+                          <Flame className="w-3.5 h-3.5" /> DESTAQUE DA SEMANA
+                        </span>
+                        <span className="text-xs text-emerald-400 font-bold">5% OFF no PIX</span>
+                      </div>
 
-                    <div className="aspect-[16/9] rounded-2xl overflow-hidden relative group">
-                      <img
-                        src={PRODUCTS[0].image}
-                        alt="Cartão Laminação Fosca"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-4">
-                        <div>
-                          <h4 className="text-sm font-bold text-white leading-tight">
-                            Cartão Laminação Fosca + Verniz Localizado
-                          </h4>
-                          <p className="text-[11px] text-slate-300">Couché 300g • 9x5cm • 1.000 unidades</p>
+                      <div className="aspect-[16/9] rounded-2xl overflow-hidden relative group bg-slate-800">
+                        {featuredProduct.image ? (
+                          <img
+                            src={featuredProduct.image}
+                            alt={featuredProduct.name}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-400 text-sm font-bold">
+                            Silk Print Gráfica
+                          </div>
+                        )}
+                        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent flex items-end p-4">
+                          <div>
+                            <h4 className="text-sm font-bold text-white leading-tight">
+                              {featuredProduct.name}
+                            </h4>
+                            <p className="text-[11px] text-slate-300">
+                              {featuredProduct.defaultFormat || 'Formato Padrão'} • {featuredProduct.category}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center justify-between pt-1">
-                      <div>
-                        <div className="text-[10px] text-slate-400 uppercase">A partir de</div>
-                        <div className="text-2xl font-black text-white font-heading">R$ 59,90</div>
+                      <div className="flex items-center justify-between pt-1">
+                        <div>
+                          <div className="text-[10px] text-slate-400 uppercase">A partir de</div>
+                          <div className="text-2xl font-black text-white font-heading">
+                            {formatCurrency(featuredProduct.basePrice || 0)}
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            setSelectedProduct(featuredProduct);
+                            setActiveView('product-details');
+                          }}
+                          className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-cyan-600/20"
+                        >
+                          <span>Personalizar Agora</span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
                       </div>
-
+                    </div>
+                  ) : (
+                    <div className="bg-slate-900/90 rounded-3xl border border-slate-700/80 p-8 text-center space-y-3">
+                      <div className="text-cyan-400 font-bold text-sm">Banco de Dados PostgreSQL Conectado</div>
+                      <p className="text-xs text-slate-400">
+                        Nenhum produto cadastrado no banco de dados. Cadastre novos itens no painel ERP.
+                      </p>
                       <button
-                        onClick={() => {
-                          setSelectedProduct(PRODUCTS[0]);
-                          setActiveView('product-details');
-                        }}
-                        className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1.5 transition-all shadow-md shadow-cyan-600/20"
+                        onClick={() => setActiveView('admin')}
+                        className="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold"
                       >
-                        <span>Personalizar Agora</span>
-                        <ArrowRight className="w-3.5 h-3.5" />
+                        Abrir Painel ERP
                       </button>
                     </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </section>
@@ -257,9 +331,9 @@ export const MasterLayout: React.FC = () => {
                         : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
                     }`}
                   >
-                    Todos ({PRODUCTS.length})
+                    Todos ({productsList.length})
                   </button>
-                  {CATEGORIES.slice(0, 5).map((cat) => (
+                  {categoriesList.slice(0, 6).map((cat) => (
                     <button
                       key={cat.id}
                       onClick={() => setSelectedCategoryFilter(cat.slug)}
@@ -276,18 +350,43 @@ export const MasterLayout: React.FC = () => {
               </div>
 
               {/* Products Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredCatalog.map((product) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    onSelect={(p) => {
-                      setSelectedProduct(p);
-                      setActiveView('product-details');
-                    }}
-                  />
-                ))}
-              </div>
+              {isLoadingCatalog ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3 text-slate-500">
+                  <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
+                  <span className="text-xs font-semibold">Carregando produtos do banco de dados...</span>
+                </div>
+              ) : filteredCatalog.length === 0 ? (
+                <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center space-y-3">
+                  <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 mx-auto flex items-center justify-center">
+                    <PackageX className="w-6 h-6" />
+                  </div>
+                  <h3 className="font-bold text-slate-800 text-sm">Nenhum produto cadastrado no banco</h3>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto">
+                    {selectedCategoryFilter !== 'TODOS'
+                      ? 'Nenhum produto encontrado para esta categoria. Selecione outra categoria ou cadastre novos itens no painel ERP.'
+                      : 'O banco de dados está conectado. Acesse o Painel de Gestão para cadastrar ou sincronizar os materiais gráficos.'}
+                  </p>
+                  <button
+                    onClick={() => setActiveView('admin')}
+                    className="px-4 py-2 bg-slate-900 hover:bg-cyan-600 text-white text-xs font-bold rounded-xl transition-colors"
+                  >
+                    Acessar Gestão de Produtos
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {filteredCatalog.map((product) => (
+                    <ProductCard
+                      key={product.id}
+                      product={product}
+                      onSelect={(p) => {
+                        setSelectedProduct(p);
+                        setActiveView('product-details');
+                      }}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* VALUE PROPOSITIONS BANNER (FuturaIM / Printi style) */}
@@ -324,7 +423,7 @@ export const MasterLayout: React.FC = () => {
                   <div>
                     <h3 className="font-bold text-sm text-slate-900 font-heading">Balcões em Todo o Brasil</h3>
                     <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      Mais de 5.000 pontos de retirada estratégicos nas capitais e cidades do interior.
+                      Rede credenciada com mais de 5.000 pontos para retirada rápida com frete reduzido.
                     </p>
                   </div>
                 </div>
@@ -335,10 +434,10 @@ export const MasterLayout: React.FC = () => {
         )}
 
         {/* VIEW 2: PRODUCT DETAILS & CONFIGURATOR */}
-        {activeView === 'product-details' && selectedProduct && (
+        {activeView === 'product-details' && (selectedProduct || productsList[0]) && (
           <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-10">
             <ProductConfigurator
-              product={selectedProduct}
+              product={selectedProduct || productsList[0]}
               onAddToCart={handleAddToCart}
               onBuyNow={handleBuyNow}
               onOpenGabaritos={() => setIsGabaritosOpen(true)}
@@ -351,7 +450,7 @@ export const MasterLayout: React.FC = () => {
                 Outros Materiais que Podem te Interessar
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {PRODUCTS.filter(p => p.id !== selectedProduct.id).slice(0, 4).map((p) => (
+                {productsList.filter(p => p.id !== (selectedProduct || productsList[0]).id).slice(0, 4).map((p) => (
                   <ProductCard
                     key={p.id}
                     product={p}
@@ -366,22 +465,33 @@ export const MasterLayout: React.FC = () => {
           </div>
         )}
 
-        {/* VIEW 3: INSTITUTIONAL PAGES */}
+        {/* VIEW 3: INSTITUTIONAL PAGES & ADMIN */}
         {activeView === 'about' && <AboutPage />}
         {activeView === 'how-to-buy' && <HowToBuyPage />}
         {activeView === 'help' && <HelpCenterPage />}
         {activeView === 'contact' && <ContactPage />}
+        {activeView === 'admin' && (
+          <AdminERPPage
+            onBackToStore={() => setActiveView('home')}
+            products={productsList}
+            categories={categoriesList}
+            onRefreshCatalog={refreshCatalog}
+          />
+        )}
 
       </main>
 
-      {/* Main Footer */}
-      <Footer
-        setActiveView={setActiveView}
-        onOpenGabaritos={() => setIsGabaritosOpen(true)}
-        onOpenBalcoes={() => setIsBalcoesOpen(true)}
-        onOpenQuote={() => setIsQuoteOpen(true)}
-        onOpenTracking={() => setIsTrackingOpen(true)}
-      />
+      {/* Main Footer (Hidden when in ERP system) */}
+      {activeView !== 'admin' && (
+        <Footer
+          setActiveView={setActiveView}
+          onOpenGabaritos={() => setIsGabaritosOpen(true)}
+          onOpenBalcoes={() => setIsBalcoesOpen(true)}
+          onOpenQuote={() => setIsQuoteOpen(true)}
+          onOpenTracking={() => setIsTrackingOpen(true)}
+        />
+      )}
+
 
       {/* Interactive Modals & Drawers */}
       <CartDrawer
@@ -401,6 +511,7 @@ export const MasterLayout: React.FC = () => {
         items={cartItems}
         appliedCoupon={appliedCoupon}
         onOrderCompleted={handleOrderCompleted}
+        pickupPoints={pickupPointsList}
       />
 
       <CustomQuoteModal
@@ -411,11 +522,13 @@ export const MasterLayout: React.FC = () => {
       <GabaritosModal
         isOpen={isGabaritosOpen}
         onClose={() => setIsGabaritosOpen(false)}
+        products={productsList}
       />
 
       <BalcoesModal
         isOpen={isBalcoesOpen}
         onClose={() => setIsBalcoesOpen(false)}
+        pickupPoints={pickupPointsList}
       />
 
       <OrderTrackingModal

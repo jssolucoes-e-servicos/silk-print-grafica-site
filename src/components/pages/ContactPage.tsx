@@ -25,7 +25,7 @@ export const ContactPage: React.FC = () => {
           Fale com a Silk Print Gráfica
         </h1>
         <p className="text-slate-600 text-sm leading-relaxed">
-          Nossa equipe de consultores gráficos e técnicos de pré-impressão está pronta para ajudar você.
+          Nossa equipe de consultores está pronta para ajudar você.
         </p>
       </div>
 
@@ -45,7 +45,7 @@ export const ContactPage: React.FC = () => {
               <MessageCircle className="w-5 h-5 text-emerald-600 shrink-0" />
               <div>
                 <div className="text-xs font-bold">WhatsApp Oficial</div>
-                <div className="text-[11px] text-emerald-700">Atendimento humanizado rápido</div>
+                <div className="text-[11px] text-emerald-700">Atendimento rápido</div>
               </div>
             </a>
 
@@ -61,7 +61,7 @@ export const ContactPage: React.FC = () => {
               <Clock className="w-5 h-5 text-pink-600 shrink-0" />
               <div>
                 <div className="text-xs font-bold">Horário de Atendimento</div>
-                <div className="text-[11px] text-slate-500">Segunda a Sexta: 08h às 18h</div>
+                <div className="text-[11px] text-slate-500">Segunda a Sexta: 09h às 18h</div>
               </div>
             </div>
 
@@ -69,7 +69,7 @@ export const ContactPage: React.FC = () => {
               <MapPin className="w-5 h-5 text-yellow-600 shrink-0" />
               <div>
                 <div className="text-xs font-bold">Parque Gráfico & Balcão Matriz</div>
-                <div className="text-[11px] text-slate-500">São Paulo / SP - Atendimento nacional</div>
+                <div className="text-[11px] text-slate-500">Porto Alegre / RS - Atendimento nacional</div>
               </div>
             </div>
           </div>
@@ -84,7 +84,7 @@ export const ContactPage: React.FC = () => {
               </div>
               <h4 className="text-lg font-bold text-slate-900">Mensagem Enviada com Sucesso!</h4>
               <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                Recebemos seu contato. Responderemos no seu e-mail e WhatsApp em até 30 minutos úteis.
+                Recebemos seu contato. Responderemos no seu e-mail ou WhatsApp em alguns minutos.
               </p>
               <button
                 type="button"

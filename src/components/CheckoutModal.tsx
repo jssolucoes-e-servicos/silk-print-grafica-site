@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { CartItem, ShippingMethod, BalcaoRetirada } from '../types';
-import { BALCOES_RETIRADA } from '../data/products';
+import { CartItem, ShippingMethod, BalcaoRetirada, Order } from '../types';
 import { formatCurrency, formatCep, formatPhone } from '../lib/utils';
+import { submitOrder } from '../lib/api';
+import { createCuid } from '../lib/cuid';
 import confetti from 'canvas-confetti';
 import { 
   X, 
@@ -26,6 +27,7 @@ interface CheckoutModalProps {
   items: CartItem[];
   appliedCoupon: string | null;
   onOrderCompleted: (orderId: string) => void;
+  pickupPoints?: BalcaoRetirada[];
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
@@ -34,25 +36,26 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   items,
   appliedCoupon,
   onOrderCompleted,
+  pickupPoints = [],
 }) => {
   const [step, setStep] = useState<'info' | 'shipping' | 'payment' | 'success'>('info');
 
   // Customer state
-  const [name, setName] = useState('Jackson Silva');
-  const [email, setEmail] = useState('jackson144@gmail.com');
-  const [phone, setPhone] = useState('(11) 98765-4321');
-  const [document, setDocument] = useState('123.456.789-00');
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [document, setDocument] = useState('');
 
   // Delivery type & address
   const [deliveryType, setDeliveryType] = useState<'balcao' | 'endereco'>('balcao');
-  const [selectedBalcao, setSelectedBalcao] = useState<BalcaoRetirada>(BALCOES_RETIRADA[0]);
-  const [cep, setCep] = useState('01310-100');
-  const [addressStreet, setAddressStreet] = useState('Avenida Paulista');
-  const [addressNumber, setAddressNumber] = useState('1578');
-  const [addressComp, setAddressComp] = useState('Apto 42');
-  const [addressNeighborhood, setAddressNeighborhood] = useState('Bela Vista');
-  const [addressCity, setAddressCity] = useState('São Paulo');
-  const [addressState, setAddressState] = useState('SP');
+  const [selectedBalcao, setSelectedBalcao] = useState<BalcaoRetirada | null>(null);
+  const [cep, setCep] = useState('');
+  const [addressStreet, setAddressStreet] = useState('');
+  const [addressNumber, setAddressNumber] = useState('');
+  const [addressComp, setAddressComp] = useState('');
+  const [addressNeighborhood, setAddressNeighborhood] = useState('');
+  const [addressCity, setAddressCity] = useState('');
+  const [addressState, setAddressState] = useState('');
 
   // Payment state
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit' | 'boleto'>('pix');
@@ -64,29 +67,36 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const [copiedPix, setCopiedPix] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [mercadoPagoData, setMercadoPagoData] = useState<{
+    qrCode?: string;
+    qrCodeBase64?: string;
+    ticketUrl?: string;
+  } | null>(null);
 
   if (!isOpen) return null;
 
   const subtotal = items.reduce((acc, item) => acc + item.totalPrice, 0);
   const discountAmount = appliedCoupon ? subtotal * 0.10 : 0;
   
+  const activeBalcao = selectedBalcao || pickupPoints[0] || null;
+
   const shippingCost = deliveryType === 'balcao' 
-    ? selectedBalcao.price 
+    ? (activeBalcao ? activeBalcao.price : 0) 
     : subtotal > 199 ? 0 : 19.90;
 
   const orderTotal = (subtotal - discountAmount) + shippingCost;
   const pixTotal = orderTotal * 0.95; // 5% discount on PIX
 
-  const fakePixCode = `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2, 15)}-silkprint520400005303986540${pixTotal.toFixed(2)}5802BR5919SILK PRINT GRAFICA6009SAO PAULO62070503***6304${Math.floor(1000 + Math.random() * 9000)}`;
+  const activePixCode = mercadoPagoData?.qrCode || `00020126580014br.gov.bcb.pix0136${Math.random().toString(36).substring(2, 15)}-silkprint520400005303986540${pixTotal.toFixed(2)}5802BR5919SILK PRINT GRAFICA6009SAO PAULO62070503***6304${Math.floor(1000 + Math.random() * 9000)}`;
 
   const handleCopyPix = () => {
-    navigator.clipboard.writeText(fakePixCode);
+    navigator.clipboard.writeText(activePixCode);
     setCopiedPix(true);
     setTimeout(() => setCopiedPix(false), 3000);
   };
 
-  const handleFinishOrder = () => {
-    const generatedId = `SP-${new Date().getFullYear()}-${Math.floor(10000 + Math.random() * 90000)}`;
+  const handleFinishOrder = async () => {
+    const generatedId = createCuid();
     setOrderId(generatedId);
     setStep('success');
 
@@ -101,8 +111,65 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       // Ignore confetti if not supported
     }
 
+    // Submit order to API
+    try {
+      const res = await submitOrder({
+        id: generatedId,
+        customer: {
+          name: name || 'Cliente',
+          email: email || '',
+          phone: phone || '',
+          document: document || ''
+        },
+        shipping: {
+          type: deliveryType,
+          price: shippingCost,
+          balcaoId: deliveryType === 'balcao' ? selectedBalcao.id : undefined,
+          balcaoName: deliveryType === 'balcao' ? selectedBalcao.name : undefined,
+          address: deliveryType === 'endereco' ? {
+            cep,
+            street: addressStreet,
+            number: addressNumber,
+            complement: addressComp,
+            neighborhood: addressNeighborhood,
+            city: addressCity,
+            state: addressState
+          } : undefined
+        },
+        items: items.map(it => ({
+          id: it.id,
+          productId: it.productId,
+          productName: it.productName,
+          format: it.format,
+          paperName: it.paper.name,
+          colorMode: it.colorMode.name,
+          finishes: it.finishes.map(f => f.name),
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+          totalPrice: it.totalPrice,
+          artworkFile: it.artworkFile ? { name: it.artworkFile.name, size: it.artworkFile.size, url: it.artworkFile.url } : undefined
+        })),
+        payment: {
+          method: paymentMethod,
+          subtotal,
+          discount: discountAmount + (paymentMethod === 'pix' ? (orderTotal - pixTotal) : 0),
+          shippingCost,
+          total: paymentMethod === 'pix' ? pixTotal : orderTotal,
+          installments: paymentMethod === 'credit' ? parseInt(installments, 10) : undefined
+        },
+        couponApplied: appliedCoupon || undefined
+      });
+
+      if (res?.paymentGateway) {
+        setMercadoPagoData(res.paymentGateway);
+      }
+    } catch (err) {
+      console.warn('Order submission background sync notice:', err);
+    }
+
     onOrderCompleted(generatedId);
   };
+
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
@@ -255,43 +322,49 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 <div className="space-y-3">
                   <div className="text-xs font-bold text-slate-700 flex items-center justify-between">
                     <span>Selecione o Balcão de Retirada Mais Próximo:</span>
-                    <span className="text-cyan-600">{BALCOES_RETIRADA.length} pontos disponíveis</span>
+                    <span className="text-cyan-600">{pickupPoints.length} pontos disponíveis</span>
                   </div>
 
                   <div className="grid grid-cols-1 gap-2.5 max-h-64 overflow-y-auto pr-1">
-                    {BALCOES_RETIRADA.map((balcao) => (
-                      <div
-                        key={balcao.id}
-                        onClick={() => setSelectedBalcao(balcao)}
-                        className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
-                          selectedBalcao.id === balcao.id
-                            ? 'border-cyan-500 bg-cyan-50/70 ring-2 ring-cyan-500/20'
-                            : 'border-slate-200 hover:border-slate-300 bg-white'
-                        }`}
-                      >
-                        <div className="flex items-start gap-3">
-                          <MapPin className={`w-4 h-4 mt-0.5 shrink-0 ${
-                            selectedBalcao.id === balcao.id ? 'text-cyan-600' : 'text-slate-400'
-                          }`} />
-                          <div>
-                            <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
-                              <span>{balcao.name}</span>
-                              <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 font-bold text-slate-700">
-                                {balcao.state}
-                              </span>
+                    {pickupPoints.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-500 bg-white rounded-xl border border-slate-200">
+                        Nenhum balcão de retirada cadastrado no banco de dados no momento.
+                      </div>
+                    ) : (
+                      pickupPoints.map((balcao) => (
+                        <div
+                          key={balcao.id}
+                          onClick={() => setSelectedBalcao(balcao)}
+                          className={`p-3.5 rounded-xl border cursor-pointer transition-all flex items-center justify-between ${
+                            activeBalcao?.id === balcao.id
+                              ? 'border-cyan-500 bg-cyan-50/70 ring-2 ring-cyan-500/20'
+                              : 'border-slate-200 hover:border-slate-300 bg-white'
+                          }`}
+                        >
+                          <div className="flex items-start gap-3">
+                            <MapPin className={`w-4 h-4 mt-0.5 shrink-0 ${
+                              activeBalcao?.id === balcao.id ? 'text-cyan-600' : 'text-slate-400'
+                            }`} />
+                            <div>
+                              <div className="text-xs font-bold text-slate-900 flex items-center gap-2">
+                                <span>{balcao.name}</span>
+                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-100 font-bold text-slate-700">
+                                  {balcao.state}
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-slate-500 mt-0.5">{balcao.address} - {balcao.neighborhood}, {balcao.city}</div>
+                              <div className="text-[10px] text-slate-400 mt-0.5">{balcao.openingHours}</div>
                             </div>
-                            <div className="text-[11px] text-slate-500 mt-0.5">{balcao.address} - {balcao.neighborhood}, {balcao.city}</div>
-                            <div className="text-[10px] text-slate-400 mt-0.5">{balcao.openingHours}</div>
+                          </div>
+
+                          <div className="text-right shrink-0 ml-3">
+                            <span className="text-xs font-black text-cyan-700">
+                              {balcao.price === 0 ? 'GRÁTIS' : formatCurrency(balcao.price)}
+                            </span>
                           </div>
                         </div>
-
-                        <div className="text-right shrink-0 ml-3">
-                          <span className="text-xs font-black text-cyan-700">
-                            {balcao.price === 0 ? 'GRÁTIS' : formatCurrency(balcao.price)}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
               ) : (
@@ -434,11 +507,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
                   <div className="bg-white p-4 rounded-xl border border-emerald-200 flex flex-col sm:flex-row items-center gap-4">
                     {/* Simulated QR Code Canvas */}
-                    <div className="w-32 h-32 bg-slate-900 rounded-lg p-2 flex items-center justify-center shrink-0">
-                      <div className="w-full h-full border-2 border-dashed border-cyan-400 p-1 flex flex-col items-center justify-center text-center text-[9px] text-white">
-                        <QrCode className="w-12 h-12 text-cyan-400" />
-                        <span>QR CODE PIX</span>
-                      </div>
+                    <div className="w-32 h-32 bg-slate-900 rounded-lg p-2 flex items-center justify-center shrink-0 overflow-hidden">
+                      {mercadoPagoData?.qrCodeBase64 ? (
+                        <img 
+                          src={`data:image/png;base64,${mercadoPagoData.qrCodeBase64}`} 
+                          alt="QR Code PIX Mercado Pago" 
+                          className="w-full h-full object-contain rounded"
+                        />
+                      ) : (
+                        <div className="w-full h-full border-2 border-dashed border-cyan-400 p-1 flex flex-col items-center justify-center text-center text-[9px] text-white">
+                          <QrCode className="w-12 h-12 text-cyan-400" />
+                          <span>QR CODE PIX</span>
+                        </div>
+                      )}
                     </div>
 
                     <div className="flex-1 space-y-2 text-xs">
@@ -449,7 +530,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         <input
                           type="text"
                           readOnly
-                          value={fakePixCode}
+                          value={activePixCode}
                           className="flex-1 px-3 py-1.5 bg-slate-100 rounded-lg text-[10px] font-mono text-slate-600 truncate border border-slate-200"
                         />
                         <button
@@ -462,6 +543,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                         </button>
                       </div>
                     </div>
+
                   </div>
                 </div>
               )}

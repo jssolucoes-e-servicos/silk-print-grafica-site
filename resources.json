@@ -1,0 +1,283 @@
+{
+  "version": "1.0.0",
+  "name": "SilkPrint ERP & Admin Permission Schema",
+  "description": "Standardized RBAC and ABAC permission resources schema for frontend, server actions, route handlers and NestJS backend.",
+  "convention": "resource.action",
+  "standardFlags": [
+    {
+      "flag": "view",
+      "label": "Visualizar / Acesso à Tela",
+      "description": "Permite acessar a tela, listar dados e visualizar detalhes."
+    },
+    {
+      "flag": "create",
+      "label": "Cadastrar / Criar",
+      "description": "Permite criar novos registros no sistema."
+    },
+    {
+      "flag": "edit",
+      "label": "Editar / Atualizar",
+      "description": "Permite alterar registros existentes e salvar modificações."
+    },
+    {
+      "flag": "delete",
+      "label": "Excluir / Soft Delete",
+      "description": "Permite inativar ou realizar exclusão lógica de registros."
+    },
+    {
+      "flag": "report",
+      "label": "Relatórios / Exportação",
+      "description": "Permite gerar relatórios, exportar CSV, Excel ou PDF."
+    },
+    {
+      "flag": "admin",
+      "label": "Administração & Restauração",
+      "description": "Permissões restritas de restauração de soft-delete, auditoria e bypass."
+    }
+  ],
+  "resources": [
+    {
+      "resource": "dashboard",
+      "name": "Dashboard Geral & BI",
+      "category": "Administration & Security",
+      "description": "Indicadores executivos, faturamento geral, DRE sintético e volume de produção.",
+      "route": "dashboard",
+      "mode": "admin",
+      "apiEndpoint": "/api/metrics/dashboard",
+      "actions": [
+        { "action": "view", "code": "dashboard.view", "description": "Visualizar métricas executivas de vendas e produção.", "danger": "low" },
+        { "action": "report", "code": "dashboard.report", "description": "Exportar consolidados e gráficos do dashboard.", "danger": "medium" },
+        { "action": "admin", "code": "dashboard.admin", "description": "Acesso a métricas confidenciais de margem e lucro líquido.", "danger": "critical" }
+      ]
+    },
+    {
+      "resource": "overview",
+      "name": "Visão Geral Operacional",
+      "category": "Production & Operations",
+      "description": "Painel de controle rápido do balcão e fila de ordens ativas.",
+      "route": "visao-geral",
+      "mode": "gestao",
+      "apiEndpoint": "/api/operations/overview",
+      "actions": [
+        { "action": "view", "code": "overview.view", "description": "Visualizar painel operacional de pedidos.", "danger": "low" },
+        { "action": "report", "code": "overview.report", "description": "Exportar lista de produção do dia.", "danger": "low" }
+      ]
+    },
+    {
+      "resource": "customers",
+      "name": "Clientes & Contatos",
+      "category": "CRM & Sales",
+      "description": "Gestão de carteira de clientes PF e PJ, histórico e contatos.",
+      "route": "clientes",
+      "mode": "gestao",
+      "apiEndpoint": "/api/customers",
+      "actions": [
+        { "action": "view", "code": "customers.view", "description": "Acessar tela e visualizar listagem de clientes.", "danger": "low" },
+        { "action": "create", "code": "customers.create", "description": "Cadastrar novos clientes PF/PJ.", "danger": "low" },
+        { "action": "edit", "code": "customers.edit", "description": "Editar informações cadastrais e fiscais de clientes.", "danger": "low" },
+        { "action": "delete", "code": "customers.delete", "description": "Inativar ou realizar soft-delete de clientes.", "danger": "high" },
+        { "action": "report", "code": "customers.report", "description": "Exportar base de contatos (WhatsApp, e-mails, CSV).", "danger": "medium" },
+        { "action": "admin", "code": "customers.admin", "description": "Restaurar clientes excluídos e visualizar logs de auditoria.", "danger": "critical" }
+      ]
+    },
+    {
+      "resource": "products",
+      "name": "Produtos & Catálogo",
+      "category": "Catalog & Pricing",
+      "description": "Catálogo de produtos da gráfica, preços por m², papéis e formatos.",
+      "route": "produtos",
+      "mode": "admin",
+      "apiEndpoint": "/api/products",
+      "actions": [
+        { "action": "view", "code": "products.view", "description": "Consultar catálogo e tabelas de preços.", "danger": "low" },
+        { "action": "create", "code": "products.create", "description": "Criar novos produtos no catálogo.", "danger": "medium" },
+        { "action": "edit", "code": "products.edit", "description": "Editar especificações técnicas e descrições de produtos.", "danger": "medium" },
+        { "action": "delete", "code": "products.delete", "description": "Remover ou desativar produtos do catálogo.", "danger": "high" },
+        { "action": "report", "code": "products.report", "description": "Exportar catálogo e relatório de saída de produtos.", "danger": "low" },
+        { "action": "admin", "code": "products.admin", "description": "Alteração em lote de preços e restauração de catálogo.", "danger": "critical" }
+      ]
+    },
+    {
+      "resource": "quotes",
+      "name": "Orçamentos & Propostas",
+      "category": "CRM & Sales",
+      "description": "Cálculo de orçamentos por m², acabamentos e envio via WhatsApp.",
+      "route": "orcamentos",
+      "mode": "gestao",
+      "apiEndpoint": "/api/quotes",
+      "actions": [
+        { "action": "view", "code": "quotes.view", "description": "Visualizar orçamentos e propostas comerciais.", "danger": "low" },
+        { "action": "create", "code": "quotes.create", "description": "Gerar novos orçamentos e propostas com cálculo m².", "danger": "low" },
+        { "action": "edit", "code": "quotes.edit", "description": "Editar orçamentos abertos ou duplicar propostas.", "danger": "low" },
+        { "action": "delete", "code": "quotes.delete", "description": "Excluir ou cancelar orçamentos gerados.", "danger": "medium" },
+        { "action": "report", "code": "quotes.report", "description": "Exportar histórico de propostas e taxa de conversão.", "danger": "low" },
+        { "action": "approve", "code": "quotes.approve", "description": "Aprovar e converter orçamento diretamente em pedido.", "danger": "low" },
+        { "action": "discount", "code": "quotes.discount", "description": "Aplicar desconto flexível acima de 10%.", "danger": "high" },
+        { "action": "admin", "code": "quotes.admin", "description": "Bypass de margem mínima e auditoria de descontos.", "danger": "critical" }
+      ]
+    },
+    {
+      "resource": "orders",
+      "name": "Pedidos & Ordens de Serviço",
+      "category": "Production & Operations",
+      "description": "Fila de produção gráfica, etapas de arte, impressão, acabamento e entrega.",
+      "route": "pedidos",
+      "mode": "gestao",
+      "apiEndpoint": "/api/orders",
+      "actions": [
+        { "action": "view", "code": "orders.view", "description": "Visualizar ordens de serviço e status da produção.", "danger": "low" },
+        { "action": "create", "code": "orders.create", "description": "Criar novos pedidos no balcão de atendimento.", "danger": "low" },
+        { "action": "edit", "code": "orders.edit", "description": "Editar detalhes da ordem de serviço e observações.", "danger": "low" },
+        { "action": "delete", "code": "orders.delete", "description": "Excluir pedido da base do sistema.", "danger": "critical" },
+        { "action": "report", "code": "orders.report", "description": "Exportar relatório de pedidos e fechamentos.", "danger": "low" },
+        { "action": "update_status", "code": "orders.update_status", "description": "Avançar etapas (Arte, Produção, Retirada, Transporte, Entregue).", "danger": "low" },
+        { "action": "payment_edit", "code": "orders.payment_edit", "description": "Alterar status de pagamento e valores recebidos.", "danger": "medium" },
+        { "action": "cancel", "code": "orders.cancel", "description": "Cancelar pedido em andamento com justificativa.", "danger": "high" },
+        { "action": "admin", "code": "orders.admin", "description": "Restaurar pedidos cancelados e bypass de status travados.", "danger": "critical" }
+      ]
+    },
+    {
+      "resource": "production",
+      "name": "Produção & Agenda de Máquinas",
+      "category": "Production & Operations",
+      "description": "Controle de pauta, prazos de entrega e alocação de equipamentos.",
+      "route": "agenda",
+      "mode": "gestao",
+      "apiEndpoint": "/api/production/schedule",
+      "actions": [
+        { "action": "view", "code": "production.view", "description": "Visualizar cronograma e prazos da agenda.", "danger": "low" },
+        { "action": "edit", "code": "production.edit", "description": "Reagendar prazos de entrega de pedidos.", "danger": "medium" },
+        { "action": "report", "code": "production.report", "description": "Relatório de tempo de produção e gargalos.", "danger": "low" },
+        { "action": "admin", "code": "production.admin", "description": "Forçar redefinição de prioridade de fila.", "danger": "high" }
+      ]
+    },
+    {
+      "resource": "online_orders",
+      "name": "Pedidos da Loja Online",
+      "category": "CRM & Sales",
+      "description": "Pedidos captados diretamente pela loja pública e e-commerce.",
+      "route": "pedidos-online",
+      "mode": "gestao",
+      "apiEndpoint": "/api/online-orders",
+      "actions": [
+        { "action": "view", "code": "online_orders.view", "description": "Visualizar pedidos recebidos da loja online.", "danger": "low" },
+        { "action": "edit", "code": "online_orders.edit", "description": "Aprovar ou rejeitar arquivos enviados pelo cliente.", "danger": "low" },
+        { "action": "create", "code": "online_orders.create", "description": "Converter pedido online em ordem de produção interna.", "danger": "low" },
+        { "action": "report", "code": "online_orders.report", "description": "Exportar dados de vendas do canal online.", "danger": "low" }
+      ]
+    },
+    {
+      "resource": "logistics",
+      "name": "Logística, Frete & Despacho",
+      "category": "Production & Operations",
+      "description": "Emissão de Declaração de Conteúdo, etiquetas dos Correios e rastreio.",
+      "route": "logistica",
+      "mode": "gestao",
+      "apiEndpoint": "/api/logistics",
+      "actions": [
+        { "action": "view", "code": "logistics.view", "description": "Visualizar fila de despacho e encomendas prontas.", "danger": "low" },
+        { "action": "create", "code": "logistics.create", "description": "Gerar e imprimir Declaração de Conteúdo dos Correios.", "danger": "low" },
+        { "action": "edit", "code": "logistics.edit", "description": "Inserir código de rastreamento e transportadora.", "danger": "low" },
+        { "action": "report", "code": "logistics.report", "description": "Exportar romaneios de envio e comprovantes.", "danger": "low" },
+        { "action": "admin", "code": "logistics.admin", "description": "Reverter envios e gerenciar tabelas de fretes.", "danger": "high" }
+      ]
+    },
+    {
+      "resource": "finishings",
+      "name": "Acabamentos Gráficos",
+      "category": "Catalog & Pricing",
+      "description": "Tabela de acabamentos: refile, vinco, verniz UV, ilhós e prazos.",
+      "route": "acabamentos",
+      "mode": "admin",
+      "apiEndpoint": "/api/finishings",
+      "actions": [
+        { "action": "view", "code": "finishings.view", "description": "Consultar acabamentos disponíveis e custos adicionais.", "danger": "low" },
+        { "action": "create", "code": "finishings.create", "description": "Cadastrar novos tipos de acabamentos gráficos.", "danger": "low" },
+        { "action": "edit", "code": "finishings.edit", "description": "Alterar preços, fórmulas de cálculo e prazos extras.", "danger": "medium" },
+        { "action": "delete", "code": "finishings.delete", "description": "Desativar acabamentos do catálogo.", "danger": "medium" },
+        { "action": "report", "code": "finishings.report", "description": "Exportar tabela de acabamentos.", "danger": "low" }
+      ]
+    },
+    {
+      "resource": "financial",
+      "name": "Financeiro, Caixa & DRE",
+      "category": "Finance & Accounting",
+      "description": "Fluxo de caixa, conciliação PIX, contas a pagar, receber e DRE gerencial.",
+      "route": "financeiro",
+      "mode": "admin",
+      "apiEndpoint": "/api/financial",
+      "actions": [
+        { "action": "view", "code": "financial.view", "description": "Visualizar fluxo de caixa e extrato financeiro.", "danger": "medium" },
+        { "action": "create", "code": "financial.create", "description": "Lançar despesas, compras de insumos e contas a pagar.", "danger": "medium" },
+        { "action": "edit", "code": "financial.edit", "description": "Editar categorias e centros de custos de lançamentos.", "danger": "medium" },
+        { "action": "delete", "code": "financial.delete", "description": "Estornar ou excluir lançamentos de caixa.", "danger": "critical" },
+        { "action": "report", "code": "financial.report", "description": "Exportar DRE gerencial, balancetes e extrato bancário.", "danger": "high" },
+        { "action": "view_dre", "code": "financial.view_dre", "description": "Visualizar DRE completo e margens de lucro líquido.", "danger": "critical" },
+        { "action": "admin", "code": "financial.admin", "description": "Conciliação bancária total e auditoria de estornos.", "danger": "critical" }
+      ]
+    },
+    {
+      "resource": "reports",
+      "name": "Relatórios & BI Executivo",
+      "category": "Finance & Accounting",
+      "description": "Relatórios consolidados de vendas por vendedor, canal e faturamento.",
+      "route": "relatorios",
+      "mode": "admin",
+      "apiEndpoint": "/api/reports",
+      "actions": [
+        { "action": "view", "code": "reports.view", "description": "Visualizar relatórios gerenciais e rankings.", "danger": "low" },
+        { "action": "report", "code": "reports.report", "description": "Exportar dados em Excel, CSV e PDF.", "danger": "low" },
+        { "action": "admin", "code": "reports.admin", "description": "Acesso a relatórios de auditoria e comissões da equipe.", "danger": "high" }
+      ]
+    },
+    {
+      "resource": "users",
+      "name": "Colaboradores & Usuários",
+      "category": "Administration & Security",
+      "description": "Cadastro de funcionários, atribuição de múltiplos perfis e acessos.",
+      "route": "funcionarios",
+      "mode": "admin",
+      "apiEndpoint": "/api/users",
+      "actions": [
+        { "action": "view", "code": "users.view", "description": "Visualizar lista de colaboradores e dados de contato.", "danger": "low" },
+        { "action": "create", "code": "users.create", "description": "Cadastrar novo colaborador no sistema.", "danger": "high" },
+        { "action": "edit", "code": "users.edit", "description": "Editar dados cadastrais, cargo e departamento.", "danger": "medium" },
+        { "action": "delete", "code": "users.delete", "description": "Bloquear ou desativar usuário do sistema.", "danger": "high" },
+        { "action": "report", "code": "users.report", "description": "Exportar lista de colaboradores e acessos.", "danger": "low" },
+        { "action": "grant_custom", "code": "users.grant_custom", "description": "Conceder permissões avulsas (temporárias ou permanentes).", "danger": "critical" },
+        { "action": "admin", "code": "users.admin", "description": "Gerenciamento completo de senhas, MFA e sessões ativas.", "danger": "critical" }
+      ]
+    },
+    {
+      "resource": "profiles",
+      "name": "Perfis de Acesso & Matriz RBAC",
+      "category": "Administration & Security",
+      "description": "Criação de perfis e parametrização da matriz de permissões resource.action.",
+      "route": "perfis",
+      "mode": "admin",
+      "apiEndpoint": "/api/profiles",
+      "actions": [
+        { "action": "view", "code": "profiles.view", "description": "Visualizar perfis de acesso existentes e matriz.", "danger": "low" },
+        { "action": "create", "code": "profiles.create", "description": "Criar novos perfis de acesso personalizados.", "danger": "high" },
+        { "action": "edit", "code": "profiles.edit", "description": "Modificar regras e permissões de perfis existentes.", "danger": "critical" },
+        { "action": "delete", "code": "profiles.delete", "description": "Excluir perfis de acesso não essenciais.", "danger": "critical" },
+        { "action": "report", "code": "profiles.report", "description": "Exportar matriz de segurança em JSON ou CSV.", "danger": "low" },
+        { "action": "admin", "code": "profiles.admin", "description": "Editar perfis padrão do sistema e auditoria de segurança.", "danger": "critical" }
+      ]
+    },
+    {
+      "resource": "settings",
+      "name": "Configurações Globais da Empresa",
+      "category": "Administration & Security",
+      "description": "Dados da gráfica, logo, WhatsApp de disparo, chave PIX e integrações.",
+      "route": "configuracoes",
+      "mode": "admin",
+      "apiEndpoint": "/api/settings",
+      "actions": [
+        { "action": "view", "code": "settings.view", "description": "Visualizar dados da empresa e parâmetros globais.", "danger": "low" },
+        { "action": "edit", "code": "settings.edit", "description": "Atualizar endereço, logo, e-mail e chave PIX.", "danger": "high" },
+        { "action": "admin", "code": "settings.admin", "description": "Configurações de segurança, webhooks e chaves de API.", "danger": "critical" }
+      ]
+    }
+  ]
+}

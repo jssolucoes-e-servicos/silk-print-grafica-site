@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Logo } from './Logo';
-import { CATEGORIES } from '../data/products';
-import { Product, ActiveView } from '../types';
+import { Product, ActiveView, Category } from '../types';
 import { 
   Search, 
   ShoppingCart, 
@@ -22,7 +21,7 @@ import {
   ShieldCheck,
   Tag
 } from 'lucide-react';
-import { formatCurrency } from '../lib/utils';
+import { formatCurrency, formatProductionDays } from '../lib/utils';
 
 interface HeaderProps {
   activeView: ActiveView;
@@ -36,6 +35,7 @@ interface HeaderProps {
   onOpenQuote: () => void;
   onOpenTracking: () => void;
   allProducts: Product[];
+  categories: Category[];
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -50,6 +50,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenQuote,
   onOpenTracking,
   allProducts,
+  categories = [],
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -71,21 +72,19 @@ export const Header: React.FC<HeaderProps> = ({
       {/* 1. TOP ANNOUNCEMENT TICKER */}
       <div className="bg-slate-900 text-white text-[11px] font-medium py-1.5 px-4 sm:px-8 border-b border-slate-800">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1.5 text-cyan-400 font-bold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>FRETE GRÁTIS</span>
-            </span>
-            <span className="hidden sm:inline text-slate-300">
-              para balcões de retirada em compras acima de R$ 199,00
-            </span>
-            <span className="text-slate-500 hidden md:inline">|</span>
-            <span className="hidden md:flex items-center gap-1 text-slate-300">
-              <Clock className="w-3 h-3 text-pink-400" /> Produção Express 24 Horas
-            </span>
-          </div>
-
+          <div className="flex items-center gap-4" />
+          
           <div className="flex items-center gap-4 text-slate-300">
+            <button
+              onClick={() => setActiveView('admin')}
+              className={`hover:text-cyan-400 transition-colors flex items-center gap-1 ${
+                activeView === 'admin' ? 'text-cyan-400 font-bold' : ''
+              }`}
+            >
+              <User className="w-3.5 h-3.5 text-cyan-400" />
+              <span>Painel ERP</span>
+            </button>
+            <span className="text-slate-600">|</span>
             <button
               onClick={onOpenTracking}
               className="hover:text-cyan-400 transition-colors flex items-center gap-1"
@@ -99,19 +98,10 @@ export const Header: React.FC<HeaderProps> = ({
               className="hover:text-cyan-400 transition-colors flex items-center gap-1"
             >
               <MapPin className="w-3.5 h-3.5 text-pink-400" />
-              <span>5.000+ Balcões</span>
+              <span>Balcões de Retirada</span>
             </button>
-            <span className="text-slate-600 hidden sm:inline">|</span>
-            <a
-              href={`https://wa.me/${whatsappNumber}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hidden sm:flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-semibold"
-            >
-              <MessageCircle className="w-3.5 h-3.5" />
-              <span>Atendimento</span>
-            </a>
           </div>
+
         </div>
       </div>
 
@@ -124,7 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
           className="cursor-pointer shrink-0"
           id="header-logo-click"
         >
-          <Logo variant="full" size="md" />
+          <Logo variant="full" size="md" theme="light" />
         </div>
 
         {/* Search Bar with Autocomplete */}
@@ -184,7 +174,7 @@ export const Header: React.FC<HeaderProps> = ({
                         />
                         <div>
                           <div className="text-xs font-bold text-slate-900">{p.name}</div>
-                          <div className="text-[11px] text-slate-500">{p.category} • Produção {p.productionTimeHours}h</div>
+                          <div className="text-[11px] text-slate-500">{p.category} • {formatProductionDays(p.productionTimeHours)}</div>
                         </div>
                       </div>
                       <div className="text-right">
@@ -269,7 +259,7 @@ export const Header: React.FC<HeaderProps> = ({
               Todos os Produtos
             </button>
 
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => {
@@ -279,10 +269,10 @@ export const Header: React.FC<HeaderProps> = ({
                 className="px-3 py-1.5 rounded-lg hover:bg-slate-200/70 hover:text-cyan-800 transition-colors whitespace-nowrap flex items-center gap-1.5"
               >
                 <span>{cat.name}</span>
-                {cat.id === 'cartoes' && (
+                {cat.slug === 'cartoes-de-visita' && (
                   <span className="text-[9px] px-1 rounded bg-pink-100 text-pink-700 font-extrabold">TOP</span>
                 )}
-                {cat.id === 'panfletos' && (
+                {cat.slug === 'panfletos-e-flyers' && (
                   <span className="text-[9px] px-1 rounded bg-cyan-100 text-cyan-800 font-extrabold">24H</span>
                 )}
               </button>
@@ -322,7 +312,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <div className="space-y-1 text-sm font-semibold">
             <div className="text-xs uppercase tracking-wider text-slate-400 font-bold px-2 py-1">Categorias</div>
-            {CATEGORIES.map((cat) => (
+            {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => {

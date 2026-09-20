@@ -79,7 +79,7 @@ export const Footer: React.FC<FooterProps> = ({
         
         {/* Col 1: Brand & Contact */}
         <div className="lg:col-span-2 space-y-4">
-          <Logo variant="full" size="md" theme="light" />
+          <Logo variant="full" size="md" theme="dark" />
           <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
             A Silk Print Gráfica é a sua gráfica online com parque industrial de alta capacidade, entregando materiais com fidelidade de cor, preços de fábrica e rapidez incomparável em todo o Brasil.
           </p>
@@ -133,16 +133,20 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Col 4: Designers & Suporte */}
         <div className="space-y-3">
           <h4 className="font-bold text-white uppercase tracking-wider text-xs font-heading">
-            Área do Designer
+            Área do Designer & Gestão
           </h4>
           <ul className="space-y-2 text-slate-400">
             <li><button onClick={onOpenGabaritos} className="hover:text-cyan-400 font-bold text-cyan-400">Baixar Gabaritos (CDR/AI/PDF)</button></li>
             <li><button onClick={onOpenTracking} className="hover:text-cyan-400">Rastreamento de Produção</button></li>
+            <li><button onClick={() => setActiveView('admin')} className="hover:text-cyan-400 text-slate-300 font-semibold flex items-center gap-1">
+              <span>Painel ERP & Produção</span>
+            </button></li>
             <li><button onClick={() => setActiveView('help')} className="hover:text-cyan-400">Guia de Sangria & CMYK</button></li>
             <li><a href={`https://wa.me/${whatsappNumber}`} target="_blank" rel="noopener noreferrer" className="hover:text-emerald-400 text-emerald-400 font-semibold flex items-center gap-1">
               <MessageCircle className="w-3.5 h-3.5" /> Suporte no WhatsApp
             </a></li>
           </ul>
+
         </div>
 
       </div>

@@ -1,22 +1,23 @@
 import React, { useState } from 'react';
 import { X, MapPin, Search, Phone, Clock, CheckCircle2, Building2 } from 'lucide-react';
-import { BALCOES_RETIRADA } from '../data/products';
+import { BalcaoRetirada } from '../types';
 import { formatCurrency } from '../lib/utils';
 
 interface BalcoesModalProps {
   isOpen: boolean;
   onClose: () => void;
+  pickupPoints?: BalcaoRetirada[];
 }
 
-export const BalcoesModal: React.FC<BalcoesModalProps> = ({ isOpen, onClose }) => {
+export const BalcoesModal: React.FC<BalcoesModalProps> = ({ isOpen, onClose, pickupPoints = [] }) => {
   const [selectedState, setSelectedState] = useState<string>('TODOS');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   if (!isOpen) return null;
 
-  const states = ['TODOS', 'SP', 'RJ', 'MG', 'PR', 'RS', 'DF', 'BA', 'CE'];
+  const states = ['TODOS', ...Array.from(new Set(pickupPoints.map(p => p.state).filter(Boolean)))];
 
-  const filteredBalcoes = BALCOES_RETIRADA.filter((b) => {
+  const filteredBalcoes = pickupPoints.filter((b) => {
     const matchesState = selectedState === 'TODOS' || b.state === selectedState;
     const matchesSearch = searchQuery === '' || 
       b.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

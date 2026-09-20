@@ -145,7 +145,7 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = () => {
 
       {/* Top Bar with Logo */}
       <header className="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <Logo variant="full" size="md" theme="light" />
+        <Logo variant="full" size="md" theme="dark" />
       </header>
 
       {/* Main Content Area */}
