@@ -37,6 +37,22 @@ export const GROUP_LABELS: Record<string, string> = {
   geral: 'Geral / Universal',
 };
 
+export const PRESET_FINISHING_CATEGORIES = [
+  'Gráfica Rápida',
+  'Comunicação Visual',
+  'Adesivos & Vinil',
+  'Confecção & Têxtil',
+  'Papelaria Comercial',
+  'Lonas & Banners',
+  'Brindes & Personalizados',
+  'Embalagens & Sacolas',
+  'Corte Especial & Vinco',
+  'Plastificação & Laminação',
+  'Verniz & Brilho',
+  'Montagem & Instalação',
+  'Identificação & Tags',
+];
+
 interface AcabamentosScreenProps {
   finishings: FinishingItem[];
   onAddFinishing: (finishing: FinishingItem) => void;
@@ -58,8 +74,9 @@ export const AcabamentosScreen: React.FC<AcabamentosScreenProps> = ({
 
   // Form states for modal (both Add and Edit)
   const [formName, setFormName] = useState('');
-  const [formCategory, setFormCategory] = useState('Confecção & Têxtil');
-  const [formLinkGroup, setFormLinkGroup] = useState<'textil' | 'papelaria' | 'comunicacao_visual' | 'brindes' | 'geral'>('textil');
+  const [formCategories, setFormCategories] = useState<string[]>(['Gráfica Rápida', 'Comunicação Visual']);
+  const [customCategoryInput, setCustomCategoryInput] = useState('');
+  const [formLinkGroups, setFormLinkGroups] = useState<string[]>(['papelaria', 'comunicacao_visual']);
   const [formPricingType, setFormPricingType] = useState<'unidade' | 'm2' | 'fixo'>('unidade');
   const [formPrice, setFormPrice] = useState('');
   const [formCost, setFormCost] = useState('');
@@ -71,8 +88,9 @@ export const AcabamentosScreen: React.FC<AcabamentosScreenProps> = ({
   const handleOpenAdd = () => {
     setEditingItem(null);
     setFormName('');
-    setFormCategory('Confecção & Têxtil');
-    setFormLinkGroup('textil');
+    setFormCategories(['Gráfica Rápida', 'Comunicação Visual']);
+    setCustomCategoryInput('');
+    setFormLinkGroups(['papelaria', 'comunicacao_visual']);
     setFormPricingType('unidade');
     setFormPrice('');
     setFormCost('');
@@ -86,8 +104,28 @@ export const AcabamentosScreen: React.FC<AcabamentosScreenProps> = ({
   const handleOpenEdit = (fin: FinishingItem) => {
     setEditingItem(fin);
     setFormName(fin.name);
-    setFormCategory(fin.category || 'Geral');
-    setFormLinkGroup((fin.linkGroup as any) || 'textil');
+    
+    // Parse categories from fin.categories or fin.category (split commas/slashes)
+    let initialCats: string[] = [];
+    if (fin.categories && fin.categories.length > 0) {
+      initialCats = [...fin.categories];
+    } else if (fin.category) {
+      initialCats = fin.category.split(/[,/]/).map((s) => s.trim()).filter(Boolean);
+    }
+    if (initialCats.length === 0) initialCats = ['Geral'];
+    setFormCategories(initialCats);
+    setCustomCategoryInput('');
+
+    // Parse link groups from fin.linkGroups or fin.linkGroup
+    let initialGroups: string[] = [];
+    if (fin.linkGroups && fin.linkGroups.length > 0) {
+      initialGroups = [...fin.linkGroups];
+    } else if (fin.linkGroup) {
+      initialGroups = [fin.linkGroup];
+    }
+    if (initialGroups.length === 0) initialGroups = ['geral'];
+    setFormLinkGroups(initialGroups);
+
     setFormPricingType(fin.pricingType || 'unidade');
     setFormPrice(fin.price ? fin.price.toString() : '0');
     setFormCost(fin.cost !== undefined ? fin.cost.toString() : '');
@@ -95,6 +133,47 @@ export const AcabamentosScreen: React.FC<AcabamentosScreenProps> = ({
     setFormDescription(fin.description || '');
     setFormActive(fin.active !== false && fin.isActive !== false);
     setIsModalOpen(true);
+  };
+
+  // Manage categories
+  const handleAddCategory = (catName: string) => {
+    const trimmed = catName.trim();
+    if (!trimmed) return;
+    const parts = trimmed.split(/[,/]/).map((p) => p.trim()).filter(Boolean);
+    setFormCategories((prev) => {
+      const next = [...prev];
+      for (const p of parts) {
+        if (!next.some((c) => c.toLowerCase() === p.toLowerCase())) {
+          next.push(p);
+        }
+      }
+      return next;
+    });
+    setCustomCategoryInput('');
+  };
+
+  const handleRemoveCategory = (catName: string) => {
+    setFormCategories((prev) => prev.filter((c) => c.toLowerCase() !== catName.toLowerCase()));
+  };
+
+  const handleTogglePresetCategory = (catName: string) => {
+    if (formCategories.some((c) => c.toLowerCase() === catName.toLowerCase())) {
+      handleRemoveCategory(catName);
+    } else {
+      handleAddCategory(catName);
+    }
+  };
+
+  // Manage link groups
+  const handleToggleLinkGroup = (groupId: string) => {
+    setFormLinkGroups((prev) => {
+      if (prev.includes(groupId)) {
+        if (prev.length === 1) return prev; // Keep at least one
+        return prev.filter((g) => g !== groupId);
+      } else {
+        return [...prev, groupId];
+      }
+    });
   };
 
   const handleSaveForm = (e: React.FormEvent) => {
@@ -105,13 +184,20 @@ export const AcabamentosScreen: React.FC<AcabamentosScreenProps> = ({
     const costNum = formCost.trim() ? parseFloat(formCost.replace(',', '.')) : undefined;
     const extraDaysNum = parseInt(formExtraDays, 10) || 0;
 
+    const finalCategories = formCategories.length > 0 ? formCategories : ['Geral'];
+    const primaryCategory = finalCategories.join(', ');
+    const finalLinkGroups = formLinkGroups.length > 0 ? formLinkGroups : ['geral'];
+    const primaryLinkGroup = finalLinkGroups[0] || 'geral';
+
     if (editingItem) {
       // Update existing
       const updated: FinishingItem = {
         ...editingItem,
         name: formName.trim(),
-        category: formCategory.trim(),
-        linkGroup: formLinkGroup,
+        category: primaryCategory,
+        categories: finalCategories,
+        linkGroup: primaryLinkGroup,
+        linkGroups: finalLinkGroups,
         pricingType: formPricingType,
         price: priceNum,
         cost: costNum,
@@ -127,8 +213,10 @@ export const AcabamentosScreen: React.FC<AcabamentosScreenProps> = ({
       const created: FinishingItem = {
         id: `acab-${Date.now()}`,
         name: formName.trim(),
-        category: formCategory.trim(),
-        linkGroup: formLinkGroup,
+        category: primaryCategory,
+        categories: finalCategories,
+        linkGroup: primaryLinkGroup,
+        linkGroups: finalLinkGroups,
         pricingType: formPricingType,
         price: priceNum,
         cost: costNum,
@@ -152,12 +240,20 @@ export const AcabamentosScreen: React.FC<AcabamentosScreenProps> = ({
         !searchTerm.trim() ||
         f.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         f.category?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (f.categories && f.categories.some((c) => c.toLowerCase().includes(searchTerm.toLowerCase()))) ||
         f.description?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const itemGroups = f.linkGroups && f.linkGroups.length > 0
+        ? f.linkGroups
+        : f.linkGroup
+        ? [f.linkGroup]
+        : ['geral'];
 
       const matchGroup =
         selectedGroup === 'all' ||
-        f.linkGroup === selectedGroup ||
-        (!f.linkGroup && selectedGroup === 'geral');
+        itemGroups.includes(selectedGroup) ||
+        itemGroups.includes('geral') ||
+        (selectedGroup === 'geral' && (!f.linkGroup && !f.linkGroups?.length));
 
       return matchSearch && matchGroup;
     });
@@ -165,10 +261,10 @@ export const AcabamentosScreen: React.FC<AcabamentosScreenProps> = ({
 
   // Counts by group
   const totalCount = finishings.length;
-  const textilCount = finishings.filter((f) => f.linkGroup === 'textil').length;
-  const papelariaCount = finishings.filter((f) => f.linkGroup === 'papelaria').length;
-  const cvCount = finishings.filter((f) => f.linkGroup === 'comunicacao_visual').length;
-  const brindesCount = finishings.filter((f) => f.linkGroup === 'brindes').length;
+  const textilCount = finishings.filter((f) => (f.linkGroups ? f.linkGroups.includes('textil') : f.linkGroup === 'textil')).length;
+  const papelariaCount = finishings.filter((f) => (f.linkGroups ? f.linkGroups.includes('papelaria') : f.linkGroup === 'papelaria')).length;
+  const cvCount = finishings.filter((f) => (f.linkGroups ? f.linkGroups.includes('comunicacao_visual') : f.linkGroup === 'comunicacao_visual')).length;
+  const brindesCount = finishings.filter((f) => (f.linkGroups ? f.linkGroups.includes('brindes') : f.linkGroup === 'brindes')).length;
 
   return (
     <div id="screen-acabamentos" className="p-4 md:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto">
@@ -306,24 +402,52 @@ export const AcabamentosScreen: React.FC<AcabamentosScreenProps> = ({
                 <div className="space-y-2">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1 min-w-0">
+                      {/* Multiple Group Badges and Category Badges */}
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-md border ${
-                            isTextil
-                              ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
-                              : item.linkGroup === 'papelaria'
-                              ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
-                              : item.linkGroup === 'comunicacao_visual'
-                              ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
-                              : 'bg-zinc-800 text-zinc-300 border-zinc-700'
-                          }`}
-                        >
-                          {GROUP_LABELS[item.linkGroup || 'geral'] || item.linkGroup}
-                        </span>
+                        {/* Grupos de Vínculo */}
+                        {(() => {
+                          const itemGroups = item.linkGroups && item.linkGroups.length > 0
+                            ? item.linkGroups
+                            : item.linkGroup
+                            ? [item.linkGroup]
+                            : ['geral'];
+                          return itemGroups.map((grp) => (
+                            <span
+                              key={grp}
+                              className={`text-[10px] font-bold px-2 py-0.5 rounded-md border inline-flex items-center gap-1 ${
+                                grp === 'textil'
+                                  ? 'bg-purple-500/10 text-purple-300 border-purple-500/20'
+                                  : grp === 'papelaria'
+                                  ? 'bg-blue-500/10 text-blue-300 border-blue-500/20'
+                                  : grp === 'comunicacao_visual'
+                                  ? 'bg-amber-500/10 text-amber-300 border-amber-500/20'
+                                  : grp === 'brindes'
+                                  ? 'bg-pink-500/10 text-pink-300 border-pink-500/20'
+                                  : 'bg-zinc-800 text-zinc-300 border-zinc-700'
+                              }`}
+                            >
+                              {GROUP_LABELS[grp] || grp}
+                            </span>
+                          ));
+                        })()}
 
-                        <span className="text-[10px] text-zinc-400 bg-zinc-950 px-2 py-0.5 rounded-md border border-zinc-800">
-                          {item.category}
-                        </span>
+                        {/* Categorias Múltiplas */}
+                        {(() => {
+                          const itemCats = item.categories && item.categories.length > 0
+                            ? item.categories
+                            : item.category
+                            ? item.category.split(/[,/]/).map((c) => c.trim()).filter(Boolean)
+                            : ['Geral'];
+                          return itemCats.map((cat) => (
+                            <span
+                              key={cat}
+                              className="text-[10px] text-zinc-300 bg-zinc-950 px-2 py-0.5 rounded-md border border-zinc-800 inline-flex items-center gap-1"
+                            >
+                              <Tag className="w-2.5 h-2.5 text-purple-400" />
+                              <span>{cat}</span>
+                            </span>
+                          ));
+                        })()}
                       </div>
 
                       <h3 className="font-bold text-sm text-zinc-100 mt-1.5 leading-snug group-hover:text-purple-300 transition-colors">
@@ -470,39 +594,150 @@ export const AcabamentosScreen: React.FC<AcabamentosScreenProps> = ({
                 />
               </div>
 
-              {/* Grupo de Vínculo e Categoria */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                    Grupo de Vínculo do Produto *
+              {/* Grupos de Vínculo Múltiplos */}
+              <div className="p-3.5 bg-zinc-950/80 border border-zinc-800 rounded-xl space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-zinc-200">
+                    Grupos de Vínculo do Produto (Seleção Múltipla) *
                   </label>
-                  <select
-                    value={formLinkGroup}
-                    onChange={(e) => setFormLinkGroup(e.target.value as any)}
-                    className="w-full px-3.5 py-2 text-xs bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-100 focus:outline-hidden focus:border-purple-500"
-                  >
-                    <option value="textil">👕 Confecção & Têxtil (Camisetas, Polos, Uniformes)</option>
-                    <option value="papelaria">📄 Papelaria & Gráfica (Cartões, Tags, Folders)</option>
-                    <option value="comunicacao_visual">🏷️ Comunicação Visual (Lonas, Banners, Adesivos)</option>
-                    <option value="brindes">✨ Brindes & Personalizados (Canecas, Copos)</option>
-                    <option value="geral">🌐 Geral / Todos os Produtos</option>
-                  </select>
-                  <p className="text-[10px] text-zinc-500 mt-1">
-                    Define em quais tipos de produtos este acabamento será sugerido.
-                  </p>
+                  <span className="text-[11px] text-purple-400 font-semibold">
+                    {formLinkGroups.length} selecionado(s)
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400">
+                  Selecione todos os tipos de produto compatíveis com este acabamento (ex: Papelaria, Comunicação Visual, etc.):
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  {[
+                    { id: 'textil', label: '👕 Confecção & Têxtil', desc: 'Camisetas, Polos, Uniformes' },
+                    { id: 'papelaria', label: '📄 Papelaria & Gráfica', desc: 'Cartões, Tags, Folders, Pastas' },
+                    { id: 'comunicacao_visual', label: '🏷️ Comunicação Visual', desc: 'Lonas, Banners, Adesivos, Placas' },
+                    { id: 'brindes', label: '✨ Brindes & Personalizados', desc: 'Canecas, Copos, Squeezes' },
+                    { id: 'geral', label: '🌐 Geral / Todos os Produtos', desc: 'Disponível universalmente' },
+                  ].map((grp) => {
+                    const isChecked = formLinkGroups.includes(grp.id);
+                    return (
+                      <button
+                        type="button"
+                        key={grp.id}
+                        onClick={() => handleToggleLinkGroup(grp.id)}
+                        className={`p-2.5 rounded-xl border text-left transition-all flex items-start gap-2.5 ${
+                          isChecked
+                            ? 'bg-purple-950/40 border-purple-500/60 text-purple-200 shadow-sm'
+                            : 'bg-zinc-900/60 border-zinc-800/80 text-zinc-400 hover:border-zinc-700 hover:text-zinc-300'
+                        }`}
+                      >
+                        <div
+                          className={`w-4 h-4 rounded mt-0.5 flex items-center justify-center text-[10px] font-bold border shrink-0 ${
+                            isChecked
+                              ? 'bg-purple-600 text-white border-purple-500'
+                              : 'bg-zinc-800 border-zinc-700 text-transparent'
+                          }`}
+                        >
+                          ✓
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-xs font-semibold leading-tight">{grp.label}</div>
+                          <div className="text-[10px] text-zinc-500 truncate">{grp.desc}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Categorias Múltiplas */}
+              <div className="p-3.5 bg-zinc-950/80 border border-zinc-800 rounded-xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-zinc-200">
+                    Categorias / Aplicações (Pode pertencer a 2 ou mais categorias) *
+                  </label>
+                  <span className="text-[11px] text-purple-400 font-semibold">
+                    {formCategories.length} categoria(s)
+                  </span>
+                </div>
+                <p className="text-[11px] text-zinc-400">
+                  Um mesmo acabamento (como <strong>Recorte Eletrônico</strong>) pode pertencer a <em>Comunicação Visual</em>, <em>Gráfica Rápida</em>, <em>Adesivos</em>, etc.
+                </p>
+
+                {/* Tags Selecionadas */}
+                <div className="flex flex-wrap gap-1.5 min-h-[32px] p-2 bg-zinc-900 border border-zinc-800 rounded-xl">
+                  {formCategories.length === 0 ? (
+                    <span className="text-xs text-zinc-500 italic">
+                      Nenhuma categoria selecionada. Escolha abaixo ou digite uma nova.
+                    </span>
+                  ) : (
+                    formCategories.map((cat) => (
+                      <span
+                        key={cat}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-purple-600/20 text-purple-300 border border-purple-500/40 rounded-lg text-xs font-medium"
+                      >
+                        <Tag className="w-3 h-3 text-purple-400" />
+                        <span>{cat}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveCategory(cat)}
+                          className="hover:text-red-400 p-0.5 transition-colors"
+                          title={`Remover ${cat}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))
+                  )}
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-zinc-300 mb-1">
-                    Categoria Interna
-                  </label>
+                {/* Input para Adicionar Nova Categoria */}
+                <div className="flex gap-2">
                   <input
                     type="text"
-                    value={formCategory}
-                    onChange={(e) => setFormCategory(e.target.value)}
-                    placeholder="Ex: Embalagem & Apresentação"
-                    className="w-full px-3.5 py-2 text-xs bg-zinc-950 border border-zinc-800 rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-hidden focus:border-purple-500"
+                    value={customCategoryInput}
+                    onChange={(e) => setCustomCategoryInput(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddCategory(customCategoryInput);
+                      }
+                    }}
+                    placeholder="Digite uma categoria e pressione Enter ou clique em Adicionar..."
+                    className="flex-1 px-3 py-1.5 text-xs bg-zinc-900 border border-zinc-800 rounded-xl text-zinc-100 placeholder-zinc-500 focus:outline-hidden focus:border-purple-500"
                   />
+                  <button
+                    type="button"
+                    onClick={() => handleAddCategory(customCategoryInput)}
+                    className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-purple-300 border border-zinc-700 rounded-xl text-xs font-semibold transition-all flex items-center gap-1 shrink-0"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                    <span>Adicionar</span>
+                  </button>
+                </div>
+
+                {/* Categorias Sugeridas Rápidas */}
+                <div className="pt-1">
+                  <div className="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider mb-1.5">
+                    Categorias Sugeridas (clique para alternar):
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PRESET_FINISHING_CATEGORIES.map((cat) => {
+                      const isSelected = formCategories.some((c) => c.toLowerCase() === cat.toLowerCase());
+                      return (
+                        <button
+                          type="button"
+                          key={cat}
+                          onClick={() => handleTogglePresetCategory(cat)}
+                          className={`px-2 py-0.5 rounded-md text-[11px] font-medium transition-all border ${
+                            isSelected
+                              ? 'bg-purple-600 text-white border-purple-500 shadow-xs'
+                              : 'bg-zinc-900 text-zinc-400 border-zinc-800 hover:border-zinc-700 hover:text-zinc-200'
+                          }`}
+                        >
+                          {isSelected ? '✓ ' : '+ '}
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
 

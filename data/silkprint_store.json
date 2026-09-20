@@ -14,130 +14,245 @@
       "id": "prod-camiseta-poliester-branca",
       "name": "Camiseta Poliéster Branca Personalizada",
       "category": "Têxtil & Confecção",
-      "price": 29.90,
-      "cost": 14.00,
+      "price": 39.9,
+      "cost": 14,
       "isM2": false,
       "isInternal": false,
       "unit": "unidade",
-      "productionTime": "2 a 4 dias úteis",
+      "productionTime": "1 dia útil",
       "description": "Camiseta 100% Poliéster Premium Branca com toque macio e excelente retenção de cor para estamparia DTF, Silk Screen e Sublimação. Grade completa do 1 ano infantil até Plus Size G3.",
       "isActive": true,
       "image": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80",
       "imageUrl": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=600&auto=format&fit=crop&q=80",
       "hasSizeGrid": true,
-      "compatibleFinishings": [
-        "acab-dobra-embalagem",
-        "acab-tag-personalizada",
-        "acab-estampa-costas",
-        "acab-estampa-manga",
-        "acab-gravacao-tela"
-      ],
+      "compatibleFinishings": [],
       "sizeVariations": [
-        { "id": "var-1ano", "size": "1 ano", "price": 29.90, "cost": 14.00, "inStock": 50, "isActive": true },
-        { "id": "var-2anos", "size": "2 anos", "price": 29.90, "cost": 14.00, "inStock": 50, "isActive": true },
-        { "id": "var-4anos", "size": "4 anos", "price": 29.90, "cost": 14.00, "inStock": 50, "isActive": true },
-        { "id": "var-6anos", "size": "6 anos", "price": 29.90, "cost": 14.00, "inStock": 50, "isActive": true },
-        { "id": "var-8anos", "size": "8 anos", "price": 29.90, "cost": 14.00, "inStock": 50, "isActive": true },
-        { "id": "var-10anos", "size": "10 anos", "price": 31.90, "cost": 15.00, "inStock": 40, "isActive": true },
-        { "id": "var-12anos", "size": "12 anos", "price": 31.90, "cost": 15.00, "inStock": 40, "isActive": true },
-        { "id": "var-14anos", "size": "14 anos", "price": 31.90, "cost": 15.00, "inStock": 40, "isActive": true },
-        { "id": "var-16anos", "size": "16 anos", "price": 31.90, "cost": 15.00, "inStock": 40, "isActive": true },
-        { "id": "var-pp", "size": "PP", "price": 35.90, "cost": 17.00, "inStock": 60, "isActive": true },
-        { "id": "var-p", "size": "P", "price": 37.90, "cost": 18.00, "inStock": 100, "isActive": true },
-        { "id": "var-m", "size": "M", "price": 37.90, "cost": 18.00, "inStock": 120, "isActive": true },
-        { "id": "var-g", "size": "G", "price": 37.90, "cost": 18.00, "inStock": 110, "isActive": true },
-        { "id": "var-gg", "size": "GG", "price": 41.90, "cost": 20.00, "inStock": 70, "isActive": true },
-        { "id": "var-xg", "size": "XG", "price": 44.90, "cost": 22.00, "inStock": 50, "isActive": true },
-        { "id": "var-g1", "size": "G1", "price": 48.90, "cost": 24.00, "inStock": 35, "isActive": true },
-        { "id": "var-g2", "size": "G2", "price": 52.90, "cost": 26.00, "inStock": 30, "isActive": true },
-        { "id": "var-g3", "size": "G3", "price": 56.90, "cost": 28.00, "inStock": 25, "isActive": true }
-      ]
+        {
+          "id": "var-1ano",
+          "size": "1 ano",
+          "price": 39.99,
+          "cost": 14,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-2anos",
+          "size": "2 anos",
+          "price": 39.99,
+          "cost": 14,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-4anos",
+          "size": "4 anos",
+          "price": 39.99,
+          "cost": 14,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-6anos",
+          "size": "6 anos",
+          "price": 39.99,
+          "cost": 14,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-8anos",
+          "size": "8 anos",
+          "price": 39.9,
+          "cost": 14,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-10anos",
+          "size": "10 anos",
+          "price": 39.99,
+          "cost": 15,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-12anos",
+          "size": "12 anos",
+          "price": 39.99,
+          "cost": 15,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-14anos",
+          "size": "14 anos",
+          "price": 39.99,
+          "cost": 15,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-p",
+          "size": "P",
+          "price": 39.99,
+          "cost": 18,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-m",
+          "size": "M",
+          "price": 39.99,
+          "cost": 18,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-g",
+          "size": "G",
+          "price": 39.99,
+          "cost": 18,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-gg",
+          "size": "GG",
+          "price": 39.99,
+          "cost": 20,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-xg",
+          "size": "XG",
+          "price": 49.99,
+          "cost": 22,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-g1",
+          "size": "G1",
+          "price": 54.99,
+          "cost": 24,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-g2",
+          "size": "G2",
+          "price": 64.99,
+          "cost": 26,
+          "inStock": 0,
+          "isActive": true
+        },
+        {
+          "id": "var-g3",
+          "size": "G3",
+          "price": 75.99,
+          "cost": 28,
+          "inStock": 0,
+          "isActive": true
+        }
+      ],
+      "basePrice": 39.9,
+      "paperType": "Poliéster",
+      "isAvailableForSale": true,
+      "trackStock": false,
+      "productionDays": 1,
+      "productFinishings": []
     }
   ],
   "finishings": [
     {
-      "id": "acab-dobra-embalagem",
-      "name": "Dobra e Embalagem Individual em Saquinho",
-      "category": "Confecção & Têxtil",
+      "id": "acab-1789862875210",
+      "name": "Recorte Eletrônico",
+      "category": "Gráfica Rápida, Comunicação Visual",
+      "categories": [
+        "Gráfica Rápida",
+        "Comunicação Visual"
+      ],
       "pricingType": "unidade",
-      "price": 1.50,
-      "cost": 0.40,
+      "price": 1,
+      "cost": 0.05,
       "unit": "un",
+      "active": true,
       "extraDays": 0,
-      "description": "Peça passada, dobrada e embalada em saquinho transparente individual com fita adesiva.",
-      "active": true
+      "linkGroup": "papelaria",
+      "linkGroups": [
+        "papelaria",
+        "comunicacao_visual"
+      ],
+      "isActive": true
     },
     {
-      "id": "acab-tag-personalizada",
-      "name": "Aplicação de Tag / Etiqueta com Cordão",
-      "category": "Confecção & Têxtil",
+      "id": "acab-1789862784798",
+      "name": "Laminação BOPP Brilho",
+      "category": "Gráfica Rápida",
+      "linkGroup": "papelaria",
       "pricingType": "unidade",
-      "price": 1.20,
-      "cost": 0.35,
-      "unit": "un",
+      "price": 0.8,
+      "cost": 0.25,
       "extraDays": 0,
-      "description": "Tag personalizada com cordão e trava de segurança na gola da camiseta.",
-      "active": true
+      "active": true,
+      "isActive": true,
+      "unit": "un"
     },
     {
-      "id": "acab-estampa-costas",
-      "name": "Estampa Costas A3 Adicional (DTF / Silk)",
-      "category": "Confecção & Têxtil",
+      "id": "acab-1789862684044",
+      "name": "Ilhós",
+      "category": "Lonas",
       "pricingType": "unidade",
-      "price": 12.00,
-      "cost": 4.50,
+      "price": 1500,
+      "cost": 5,
       "unit": "un",
-      "extraDays": 1,
-      "description": "Aplicação de arte adicional nas costas formato até 29x42cm.",
-      "active": true
-    },
-    {
-      "id": "acab-estampa-manga",
-      "name": "Estampa Manga 10x10cm Adicional",
-      "category": "Confecção & Têxtil",
-      "pricingType": "unidade",
-      "price": 6.00,
-      "cost": 2.00,
-      "unit": "un",
-      "extraDays": 1,
-      "description": "Aplicação de logotipo na manga direita ou esquerda.",
-      "active": true
+      "active": true,
+      "extraDays": 0,
+      "linkGroup": "comunicacao_visual",
+      "isActive": true
     },
     {
       "id": "acab-gravacao-tela",
       "name": "Gravação de Matriz / Tela Silk Screen (Setup Fixo)",
       "category": "Confecção & Têxtil",
       "pricingType": "fixo",
-      "price": 45.00,
-      "cost": 15.00,
+      "price": 45,
+      "cost": 45,
       "unit": "serviço",
       "extraDays": 1,
       "description": "Taxa única de fotolito e revelação da matriz serigráfica por cor.",
-      "active": true
+      "active": true,
+      "linkGroup": "textil",
+      "isActive": true
     },
     {
       "id": "acab-laminacao-fosca",
-      "name": "Laminação Fosca Soft Touch",
+      "name": "Laminação BOPP Fosco",
       "category": "Gráfica Rápida",
       "pricingType": "unidade",
-      "price": 0.80,
+      "price": 0.8,
       "cost": 0.25,
       "unit": "un",
-      "extraDays": 1,
+      "extraDays": 0,
       "description": "Película aveludada antirreflexo de alto padrão.",
-      "active": true
+      "active": true,
+      "linkGroup": "papelaria",
+      "isActive": true
     },
     {
       "id": "acab-verniz-uv",
       "name": "Verniz UV Localizado",
       "category": "Gráfica Rápida",
       "pricingType": "unidade",
-      "price": 1.20,
-      "cost": 0.40,
+      "price": 1.2,
+      "cost": 0.4,
       "unit": "un",
-      "extraDays": 1,
+      "extraDays": 0,
       "description": "Brilho pontual com máscara de verniz em detalhes da arte.",
-      "active": true
+      "active": true,
+      "linkGroup": "papelaria",
+      "isActive": true
     }
   ],
   "employees": [
@@ -523,5 +638,5 @@
     }
   ],
   "isRealDataOnly": true,
-  "lastUpdated": "2026-09-19T23:15:09.424Z"
+  "lastUpdated": "2026-09-20T00:11:44.152Z"
 }

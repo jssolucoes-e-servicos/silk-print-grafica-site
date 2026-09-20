@@ -71,8 +71,8 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
   const [isDeletingConfirm, setIsDeletingConfirm] = useState(false);
 
   // Edit form state
-  const [name, setName] = useState(client.name);
-  const [whatsapp, setWhatsapp] = useState(client.whatsapp);
+  const [name, setName] = useState(client.name || '');
+  const [whatsapp, setWhatsapp] = useState(client.whatsapp || '');
   const [email, setEmail] = useState(client.email || '');
   const [cpfCnpj, setCpfCnpj] = useState(client.cpfCnpj || '');
   const [cep, setCep] = useState(client.cep || '');
@@ -86,8 +86,8 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
   // Reset form when client changes
   React.useEffect(() => {
     if (client) {
-      setName(client.name);
-      setWhatsapp(client.whatsapp);
+      setName(client.name || '');
+      setWhatsapp(client.whatsapp || '');
       setEmail(client.email || '');
       setCpfCnpj(client.cpfCnpj || '');
       setCep(client.cep || '');
@@ -102,26 +102,27 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
     }
   }, [client]);
 
-  // Client-specific filtered data
+  // Client-specific filtered data with safe null checking
   const clientOrders = orders.filter(
-    (o) => o.clientId === client.id || o.clientName.toLowerCase() === client.name.toLowerCase()
+    (o) => o.clientId === client.id || (o.clientName && client.name && o.clientName.toLowerCase() === client.name.toLowerCase())
   );
   const clientQuotes = quotes.filter(
-    (q) => q.clientId === client.id || q.clientName.toLowerCase() === client.name.toLowerCase()
+    (q) => q.clientId === client.id || (q.clientName && client.name && q.clientName.toLowerCase() === client.name.toLowerCase())
   );
   const clientTransactions = transactions.filter(
-    (t) => t.clientId === client.id || (t.clientName && t.clientName.toLowerCase() === client.name.toLowerCase())
+    (t) => t.clientId === client.id || (t.clientName && client.name && t.clientName.toLowerCase() === client.name.toLowerCase())
   );
 
-  const totalSpentCalculated = clientOrders.reduce((sum, o) => sum + o.total, 0) || client.totalSpent || 0;
+  const totalSpentCalculated = clientOrders.reduce((sum, o) => sum + (o.total || 0), 0) || client.totalSpent || 0;
   const ordersCountCalculated = clientOrders.length || client.ordersCount || 0;
   const ticketMedio = ordersCountCalculated > 0 ? totalSpentCalculated / ordersCountCalculated : 0;
   const pendingOrders = clientOrders.filter((o) => o.paymentStatus === 'pendente' || o.paymentStatus === 'parcial');
-  const totalPendingAmount = pendingOrders.reduce((sum, o) => sum + (o.total - (o.paidAmount || 0)), 0);
+  const totalPendingAmount = pendingOrders.reduce((sum, o) => sum + ((o.total || 0) - (o.paidAmount || 0)), 0);
 
-  const cleanPhone = client.whatsapp.replace(/\D/g, '');
+  const cleanPhone = (client.whatsapp || '').replace(/\D/g, '');
 
   const handleCopyPhone = () => {
+    if (!client.whatsapp) return;
     navigator.clipboard.writeText(client.whatsapp);
     setCopiedPhone(true);
     setTimeout(() => setCopiedPhone(false), 2000);
@@ -153,7 +154,7 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
 
   const handleSendWhatsappTemplate = (templateType: 'saudacao' | 'cobranca' | 'pos_venda' | 'orcamento') => {
     let msg = '';
-    const firstName = client.name.split(' ')[0];
+    const firstName = (client.name || 'Cliente').split(' ')[0];
 
     switch (templateType) {
       case 'saudacao':
@@ -172,11 +173,11 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
 
     if (onOpenWhatsAppChat) {
       onOpenWhatsAppChat({
-        clientName: client.name,
-        clientPhone: client.whatsapp,
+        clientName: client.name || 'Cliente',
+        clientPhone: client.whatsapp || '',
         initialMessage: msg,
       });
-    } else {
+    } else if (cleanPhone) {
       const encoded = encodeURIComponent(msg);
       window.open(`https://wa.me/55${cleanPhone}?text=${encoded}`, '_blank');
     }

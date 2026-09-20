@@ -427,18 +427,36 @@ export const ModalDetalhesProduto: React.FC<ModalDetalhesProdutoProps> = ({
     const matchesSearch =
       f.name.toLowerCase().includes(finishingSearch.toLowerCase()) ||
       f.category.toLowerCase().includes(finishingSearch.toLowerCase()) ||
-      (f.linkGroup && f.linkGroup.toLowerCase().includes(finishingSearch.toLowerCase()));
+      (f.categories && f.categories.some((c) => c.toLowerCase().includes(finishingSearch.toLowerCase()))) ||
+      (f.linkGroup && f.linkGroup.toLowerCase().includes(finishingSearch.toLowerCase())) ||
+      (f.linkGroups && f.linkGroups.some((g) => g.toLowerCase().includes(finishingSearch.toLowerCase())));
 
     if (!matchesSearch) return false;
+
+    const itemGroups = f.linkGroups && f.linkGroups.length > 0
+      ? f.linkGroups
+      : f.linkGroup
+      ? [f.linkGroup]
+      : ['geral'];
+
+    const itemCats = f.categories && f.categories.length > 0
+      ? f.categories
+      : f.category
+      ? f.category.split(/[,/]/).map((c) => c.trim()).filter(Boolean)
+      : [];
 
     if (finishingGroupFilter === 'todos') return true;
     if (finishingGroupFilter === 'auto') {
       if (isProductTextile) {
-        return f.linkGroup === 'textil' || f.category.toLowerCase().includes('têxtil') || f.category.toLowerCase().includes('confecção');
+        return (
+          itemGroups.includes('textil') ||
+          itemGroups.includes('geral') ||
+          itemCats.some((c) => c.toLowerCase().includes('têxtil') || c.toLowerCase().includes('confecção'))
+        );
       }
       return true;
     }
-    return f.linkGroup === finishingGroupFilter;
+    return itemGroups.includes(finishingGroupFilter) || itemGroups.includes('geral');
   });
 
   return (
@@ -1534,14 +1552,37 @@ export const ModalDetalhesProduto: React.FC<ModalDetalhesProdutoProps> = ({
                                 <h4 className="font-semibold text-xs text-zinc-100">
                                   {fin.name}
                                 </h4>
-                                <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-400">
-                                  {fin.category}
-                                </span>
-                                {fin.linkGroup && (
-                                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-purple-900/40 text-purple-300 border border-purple-800/50">
-                                    {fin.linkGroup}
-                                  </span>
-                                )}
+                                {/* Categorias Múltiplas */}
+                                {(() => {
+                                  const cats = fin.categories && fin.categories.length > 0
+                                    ? fin.categories
+                                    : fin.category ? fin.category.split(/[,/]/).map((s) => s.trim()).filter(Boolean) : ['Geral'];
+                                  return cats.map((cat) => (
+                                    <span key={cat} className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300">
+                                      {cat}
+                                    </span>
+                                  ));
+                                })()}
+
+                                {/* Grupos de Vínculo Múltiplos */}
+                                {(() => {
+                                  const grps = fin.linkGroups && fin.linkGroups.length > 0
+                                    ? fin.linkGroups
+                                    : fin.linkGroup ? [fin.linkGroup] : ['geral'];
+                                  return grps.map((grp) => (
+                                    <span key={grp} className="text-[10px] px-1.5 py-0.2 rounded bg-purple-900/40 text-purple-300 border border-purple-800/50">
+                                      {grp === 'textil'
+                                        ? '👕 Confecção'
+                                        : grp === 'papelaria'
+                                        ? '📄 Papelaria'
+                                        : grp === 'comunicacao_visual'
+                                        ? '🏷️ Comunicação Visual'
+                                        : grp === 'brindes'
+                                        ? '✨ Brindes'
+                                        : '🌐 Geral'}
+                                    </span>
+                                  ));
+                                })()}
                                 {hasOverride && (
                                   <span className="text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1 font-bold">
                                     <SlidersHorizontal className="w-2.5 h-2.5" />

@@ -263,7 +263,9 @@ export interface FinishingItem {
   id: string;
   name: string;
   category: string;
+  categories?: string[]; // Múltiplas categorias às quais o acabamento pertence
   linkGroup?: 'textil' | 'papelaria' | 'comunicacao_visual' | 'brindes' | 'geral' | string;
+  linkGroups?: ('textil' | 'papelaria' | 'comunicacao_visual' | 'brindes' | 'geral' | string)[]; // Múltiplos grupos de vínculo
   price: number;
   cost?: number;
   unit?: string;
