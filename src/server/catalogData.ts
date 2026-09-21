@@ -134,10 +134,10 @@ export function getGabaritosCatalog() {
     image: prod.image,
     defaultFormat: prod.defaultFormat,
     bleedSpecs: prod.bleedSpecs,
-    formats: prod.gabaritos.map(g => ({
+    formats: (prod.gabaritos || []).map(g => ({
       format: g.format,
       downloads: {
-        pdf: g.pdfUrl || '#',
+        pdf: g.pdfUrl || g.url || '#',
         cdr: g.cdrUrl || '#',
         ai: g.aiUrl || '#',
         psd: g.psdUrl || '#'
@@ -308,7 +308,7 @@ export function updateOrderStatus(id: string, status: Order['status']): Order | 
   order.status = status;
 
   // Update timeline
-  const stepMap: Record<Order['status'], number> = {
+  const stepMap: Partial<Record<Order['status'], number>> = {
     pendente_pagamento: 0,
     aprovado: 0,
     pre_impressao: 1,
@@ -318,6 +318,12 @@ export function updateOrderStatus(id: string, status: Order['status']): Order | 
     pronto_retirada: 4,
     entregue: 4,
     cancelado: 0,
+    criando_arte: 0,
+    em_aberto: 0,
+    em_producao: 2,
+    aguardando_retirada: 4,
+    em_transporte: 4,
+    aguardando_pagamento: 0,
   };
 
   const currentIdx = stepMap[status] ?? 0;

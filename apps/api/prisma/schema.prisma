@@ -1,0 +1,255 @@
+// Prisma Schema for SilkPrint ERP / Gráfica & Comunicação Visual
+// Configured for PostgreSQL and Prisma ORM
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// 1. Clientes
+model Client {
+  id          String   @id @default(uuid())
+  name        String   @map("name")
+  whatsapp    String   @map("whatsapp")
+  email       String?  @map("email")
+  cpfCnpj     String?  @map("cpf_cnpj")
+  cep         String?  @map("cep")
+  endereco    String?  @map("endereco")
+  numero      String?  @map("numero")
+  bairro      String?  @map("bairro")
+  cidade      String?  @map("cidade")
+  estado      String?  @map("estado")
+  observacoes String?  @map("observacoes") @db.Text
+  ordersCount Int      @default(0) @map("orders_count")
+  totalSpent  Decimal  @default(0.0) @map("total_spent") @db.Decimal(12, 2)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  quotes     Quote[]
+  orders     Order[]
+  minioFiles MinioFile[]
+
+  @@map("clients")
+}
+
+// 2. Produtos e Catálogo
+model Product {
+  id                   String   @id @default(uuid())
+  name                 String   @map("name")
+  category             String   @map("category")
+  price                Decimal  @map("price") @db.Decimal(12, 2)
+  basePrice            Decimal? @map("base_price") @db.Decimal(12, 2)
+  cost                 Decimal? @map("cost") @db.Decimal(12, 2)
+  unit                 String   @default("un") @map("unit")
+  minQty               Int      @default(1) @map("min_qty")
+  image                String?  @map("image") @db.Text
+  description          String?  @map("description") @db.Text
+  isInternal           Boolean  @default(false) @map("is_internal")
+  isM2                 Boolean  @default(false) @map("is_m2")
+  baseM2Price          Decimal? @map("base_m2_price") @db.Decimal(12, 2)
+  productionTime       String?  @map("production_time")
+  paperType            String?  @map("paper_type")
+  paperWeight          String?  @map("paper_weight")
+  printType            String?  @map("print_type")
+  compatibleFinishings Json?    @default("[]") @map("compatible_finishings")
+  priceTiers           Json?    @default("[]") @map("price_tiers")
+  isActive             Boolean  @default(true) @map("is_active")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("products")
+}
+
+// 3. Acabamentos
+model Finishing {
+  id          String   @id @default(uuid())
+  name        String   @map("name")
+  category    String   @map("category")
+  price       Decimal  @map("price") @db.Decimal(12, 2)
+  cost        Decimal? @map("cost") @db.Decimal(12, 2)
+  unit        String   @default("un") @map("unit")
+  pricingType String   @default("unidade") @map("pricing_type")
+  extraDays   Int      @default(0) @map("extra_days")
+  description String?  @map("description") @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("finishings")
+}
+
+// 4. Orçamentos (Quotes)
+model Quote {
+  id             String   @id @default(uuid())
+  code           String?  @map("code")
+  number         String?  @map("number")
+  clientId       String?  @map("client_id")
+  clientName     String   @map("client_name")
+  clientWhatsapp String   @map("client_whatsapp")
+  items          Json     @default("[]") @map("items")
+  observations   String?  @map("observations") @db.Text
+  validUntil     String?  @map("valid_until")
+  validityDate   String?  @map("validity_date")
+  subtotal       Decimal  @default(0.0) @map("subtotal") @db.Decimal(12, 2)
+  discount       Decimal  @default(0.0) @map("discount") @db.Decimal(12, 2)
+  total          Decimal  @map("total") @db.Decimal(12, 2)
+  status         String   @default("enviado") @map("status")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relacionamento
+  client Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@map("quotes")
+}
+
+// 5. Pedidos de Produção (Orders)
+model Order {
+  id              String   @id @default(uuid())
+  code            String   @map("code")
+  clientId        String?  @map("client_id")
+  clientName      String   @map("client_name")
+  clientWhatsapp  String   @map("client_whatsapp")
+  clientCpf       String?  @map("client_cpf")
+  clientEmail     String?  @map("client_email")
+  cep             String?  @map("cep")
+  endereco        String?  @map("endereco")
+  numero          String?  @map("numero")
+  bairro          String?  @map("bairro")
+  cidade          String?  @map("cidade")
+  estado          String?  @map("estado")
+  description     String   @map("description") @db.Text
+  items           Json?    @default("[]") @map("items")
+  itemsCount      Int      @default(1) @map("items_count")
+  total           Decimal  @map("total") @db.Decimal(12, 2)
+  paidAmount      Decimal  @default(0.0) @map("paid_amount") @db.Decimal(12, 2)
+  status          String   @default("em_aberto") @map("status")
+  paymentStatus   String   @default("pendente") @map("payment_status")
+  paymentMethod   String?  @map("payment_method")
+  pixKey          String?  @map("pix_key")
+  trackingCode    String?  @map("tracking_code")
+  shippingCarrier String?  @map("shipping_carrier")
+  deliveryDate    String?  @map("delivery_date")
+  notes           String?  @map("notes") @db.Text
+  isOnlineOrder   Boolean  @default(false) @map("is_online_order")
+  messages        Json?    @default("[]") @map("messages")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at")
+
+  // Relacionamentos
+  client     Client?     @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  minioFiles MinioFile[]
+
+  @@map("orders")
+}
+
+// 6. Transações Financeiras (Fluxo de Caixa)
+model Transaction {
+  id             String   @id @default(uuid())
+  type           String   @map("type") // 'receita' | 'despesa'
+  description    String   @map("description")
+  value          Decimal  @map("value") @db.Decimal(12, 2)
+  paymentMethod  String?  @map("payment_method")
+  status         String   @default("pago") @map("status")
+  dueDate        String?  @map("due_date")
+  category       String?  @map("category")
+  observations   String?  @map("observations") @db.Text
+  clientName     String?  @map("client_name")
+  clientId       String?  @map("client_id")
+  orderId        String?  @map("order_id")
+  orderCode      String?  @map("order_code")
+  paidAt         String?  @map("paid_at")
+  documentNumber String?  @map("document_number")
+  supplierName   String?  @map("supplier_name")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  @@map("transactions")
+}
+
+// 7. Perfis de Acesso (RBAC)
+model AccessProfile {
+  id                 String   @id @default(uuid())
+  name               String   @map("name")
+  code               String   @unique @map("code")
+  description        String?  @map("description") @db.Text
+  color              String?  @map("color")
+  icon               String?  @map("icon")
+  isSystemDefault    Boolean  @default(false) @map("is_system_default")
+  allowedPermissions Json?    @default("[]") @map("allowed_permissions")
+  allowedScreens     Json?    @default("[]") @map("allowed_screens")
+  allowedRoutines    Json?    @default("[]") @map("allowed_routines")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("access_profiles")
+}
+
+// 8. Funcionários / Colaboradores & Autenticação
+model Employee {
+  id                String    @id @default(uuid())
+  name              String    @map("name")
+  email             String    @unique @map("email")
+  passwordHash      String?   @map("password_hash")
+  salt              String?   @map("salt")
+  whatsapp          String    @map("whatsapp")
+  avatar            String?   @map("avatar") @db.Text
+  jobTitle          String    @map("job_title")
+  department        String    @map("department")
+  status            String    @default("Ativo") @map("status")
+  isMaster          Boolean   @default(false) @map("is_master")
+  profileIds        Json?     @default("[]") @map("profile_ids")
+  customPermissions Json?     @default("[]") @map("custom_permissions")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  lastLogin         DateTime? @map("last_login")
+
+  @@map("employees")
+}
+
+// 9. Arquivos MinIO S3
+model MinioFile {
+  id           String   @id @default(uuid())
+  bucket       String   @map("bucket")
+  filename     String   @map("filename")
+  originalName String   @map("original_name")
+  size         BigInt   @map("size")
+  mimeType     String?  @map("mime_type")
+  url          String?  @map("url") @db.Text
+  category     String   @default("geral") @map("category")
+  orderId      String?  @map("order_id")
+  clientId     String?  @map("client_id")
+  uploadedBy   String?  @map("uploaded_by")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relacionamentos
+  order  Order?  @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  client Client? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+
+  @@map("minio_files")
+}
+
+// 10. Logs de Eventos n8n
+model N8nEventLog {
+  id         String   @id @default(uuid())
+  eventType  String   @map("event_type")
+  targetUrl  String   @map("target_url") @db.Text
+  payload    Json     @map("payload")
+  status     String   @map("status")
+  httpStatus Int?     @map("http_status")
+  response   String?  @map("response") @db.Text
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("n8n_event_logs")
+}
+
+// 11. Configurações Globais do Sistema
+model SystemSetting {
+  key       String   @id @map("key")
+  value     Json     @map("value")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("system_settings")
+}

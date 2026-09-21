@@ -93,6 +93,7 @@ import { AdminQuotesTab } from '../admin/AdminQuotesTab';
 import { AdminPricingTab } from '../admin/AdminPricingTab';
 import { AdminFinishingsTab } from '../admin/AdminFinishingsTab';
 import { AdminShippingDeclarationTab } from '../admin/AdminShippingDeclarationTab';
+import { ModalDetalhesCliente } from '../modals/ModalDetalhesCliente';
 
 interface AdminERPPageProps {
   onBackToStore: () => void;
@@ -171,6 +172,8 @@ export const AdminERPPage: React.FC<AdminERPPageProps> = ({
   const [isProductModalOpen, setIsProductModalOpen] = useState(false);
   const [selectedOrderForView, setSelectedOrderForView] = useState<Order | null>(null);
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
+  const [selectedCustomerForDetails, setSelectedCustomerForDetails] = useState<any | null>(null);
+  const [isCustomerDetailsModalOpen, setIsCustomerDetailsModalOpen] = useState(false);
 
   // Category Modal
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
@@ -2355,9 +2358,18 @@ export const AdminERPPage: React.FC<AdminERPPageProps> = ({
                       customers.map((c) => {
                         const cleanPhone = (c.phone || '').replace(/\D/g, '');
                         return (
-                          <tr key={c.id || c.email} className="hover:bg-slate-800/40">
+                          <tr 
+                            key={c.id || c.email} 
+                            onClick={() => {
+                              setSelectedCustomerForDetails(c);
+                              setIsCustomerDetailsModalOpen(true);
+                            }}
+                            className="hover:bg-slate-800/60 cursor-pointer transition-colors group"
+                          >
                             <td className="p-3.5">
-                              <div className="font-bold text-white">{c.name}</div>
+                              <div className="font-bold text-white group-hover:text-cyan-400 transition-colors flex items-center gap-2">
+                                <span>{c.name}</span>
+                              </div>
                               {c.companyName && <div className="text-[11px] text-slate-400">{c.companyName}</div>}
                             </td>
                             <td className="p-3.5">
@@ -2374,18 +2386,32 @@ export const AdminERPPage: React.FC<AdminERPPageProps> = ({
                               {formatCurrency(c.totalSpent || 0)}
                             </td>
                             <td className="p-3.5 text-right">
-                              {cleanPhone ? (
-                                <a
-                                  href={`https://wa.me/55${cleanPhone}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="px-2.5 py-1 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900 font-bold inline-flex items-center gap-1 text-[11px]"
+                              <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  onClick={() => {
+                                    setSelectedCustomerForDetails(c);
+                                    setIsCustomerDetailsModalOpen(true);
+                                  }}
+                                  className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold inline-flex items-center gap-1.5 text-[11px] transition-colors"
+                                  title="Ver ficha completa e histórico"
                                 >
-                                  <Phone className="w-3 h-3" /> WhatsApp
-                                </a>
-                              ) : (
-                                <span className="text-slate-600 text-[11px]">-</span>
-                              )}
+                                  <Eye className="w-3.5 h-3.5 text-cyan-400" />
+                                  <span>Ficha</span>
+                                </button>
+                                {cleanPhone ? (
+                                  <a
+                                    href={`https://wa.me/55${cleanPhone}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="px-2.5 py-1 rounded-lg bg-emerald-950 text-emerald-400 border border-emerald-800 hover:bg-emerald-900 font-bold inline-flex items-center gap-1 text-[11px] transition-colors"
+                                    title="Abrir WhatsApp"
+                                  >
+                                    <Phone className="w-3 h-3" /> WhatsApp
+                                  </a>
+                                ) : (
+                                  <span className="text-slate-600 text-[11px]">-</span>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -2554,6 +2580,41 @@ export const AdminERPPage: React.FC<AdminERPPageProps> = ({
         order={selectedOrderForView}
         onUpdateStatus={handleUpdateOrderStatus}
       />
+
+      {/* ================================================================= */}
+      {/* MODAL: CUSTOMER PROFILE & ORDER HISTORY */}
+      {/* ================================================================= */}
+      {selectedCustomerForDetails && (
+        <ModalDetalhesCliente
+          client={{
+            id: selectedCustomerForDetails.id || selectedCustomerForDetails.email || 'CLI-01',
+            name: selectedCustomerForDetails.name || 'Cliente',
+            email: selectedCustomerForDetails.email || '',
+            whatsapp: selectedCustomerForDetails.phone || '',
+            cpfCnpj: selectedCustomerForDetails.document || '',
+            totalSpent: selectedCustomerForDetails.totalSpent || 0,
+            ordersCount: selectedCustomerForDetails.totalOrders || 1,
+            cidade: selectedCustomerForDetails.city || 'São Paulo',
+            estado: selectedCustomerForDetails.state || 'SP',
+          }}
+          isOpen={isCustomerDetailsModalOpen}
+          onClose={() => {
+            setIsCustomerDetailsModalOpen(false);
+            setSelectedCustomerForDetails(null);
+          }}
+          orders={orders.filter(o => 
+            (o.customer?.email && selectedCustomerForDetails.email && o.customer.email.toLowerCase() === selectedCustomerForDetails.email.toLowerCase()) ||
+            (o.customer?.name && selectedCustomerForDetails.name && o.customer.name.toLowerCase() === selectedCustomerForDetails.name.toLowerCase()) ||
+            (o.clientName && selectedCustomerForDetails.name && o.clientName.toLowerCase() === selectedCustomerForDetails.name.toLowerCase())
+          )}
+          quotes={[]}
+          transactions={[]}
+          onOpenOrderDetails={(order) => {
+            setSelectedOrderForView(order);
+            setIsOrderModalOpen(true);
+          }}
+        />
+      )}
 
     </div>
   );

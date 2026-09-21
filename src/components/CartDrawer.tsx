@@ -107,14 +107,14 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               items.map((item) => (
                 <div key={item.id} className="pt-4 first:pt-0 flex gap-3.5">
                   <img
-                    src={item.image}
-                    alt={item.productName}
+                    src={(item as any).image || item.product?.image || item.product?.imageUrl || 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?w=300&auto=format&fit=crop&q=80'}
+                    alt={(item as any).productName || item.product?.name || 'Material Gráfico'}
                     className="w-16 h-16 rounded-xl object-cover border border-slate-200 shrink-0"
                   />
                   <div className="flex-1 min-w-0 space-y-1">
                     <div className="flex items-start justify-between gap-2">
                       <h4 className="text-xs font-bold text-slate-900 leading-snug truncate">
-                        {item.productName}
+                        {(item as any).productName || item.product?.name || 'Material Gráfico'}
                       </h4>
                       <button
                         onClick={() => onRemoveItem(item.id)}
@@ -126,7 +126,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     </div>
 
                     <div className="text-[11px] text-slate-500">
-                      <span>{item.quantity.toLocaleString('pt-BR')} un</span> • <span>{item.format}</span> • <span>{item.paper.name}</span>
+                      <span>{(item.quantity || 1).toLocaleString('pt-BR')} un</span> • <span>{item.format || 'Padrão'}</span> • <span>{item.paper?.name || 'Padrão'}</span>
                     </div>
 
                     {item.artworkFile && (

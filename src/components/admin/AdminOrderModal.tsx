@@ -83,6 +83,48 @@ const STATUS_LABELS: Record<OrderStatus, { label: string; bg: string; text: stri
     label: 'Cancelado',
     bg: 'bg-rose-950/60 border-rose-800',
     text: 'text-rose-400'
+  },
+  criando_arte: {
+    label: 'Criando Arte',
+    bg: 'bg-purple-950/60 border-purple-800',
+    text: 'text-purple-400',
+    next: 'pre_impressao',
+    nextLabel: 'Enviar p/ Aprovação / CTP'
+  },
+  em_aberto: {
+    label: 'Em Aberto',
+    bg: 'bg-blue-950/60 border-blue-800',
+    text: 'text-blue-400',
+    next: 'em_producao',
+    nextLabel: 'Iniciar Produção'
+  },
+  em_producao: {
+    label: 'Em Produção',
+    bg: 'bg-amber-950/60 border-amber-800',
+    text: 'text-amber-400',
+    next: 'aguardando_retirada',
+    nextLabel: 'Finalizar Produção'
+  },
+  aguardando_retirada: {
+    label: 'Aguardando Retirada',
+    bg: 'bg-cyan-950/60 border-cyan-800',
+    text: 'text-cyan-400',
+    next: 'entregue',
+    nextLabel: 'Confirmar Entrega'
+  },
+  em_transporte: {
+    label: 'Em Transporte / Despachado',
+    bg: 'bg-indigo-950/60 border-indigo-800',
+    text: 'text-indigo-400',
+    next: 'entregue',
+    nextLabel: 'Confirmar Entrega'
+  },
+  aguardando_pagamento: {
+    label: 'Aguardando Pagamento',
+    bg: 'bg-amber-950/60 border-amber-800',
+    text: 'text-amber-400',
+    next: 'aprovado',
+    nextLabel: 'Confirmar Pagamento'
   }
 };
 

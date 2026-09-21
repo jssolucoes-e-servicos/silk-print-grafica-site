@@ -199,6 +199,8 @@ export async function dbGetAllProducts(): Promise<Product[]> {
         shortDescription: r.short_description || '',
         description: r.description || '',
         basePrice: Number(r.base_price),
+        price: Number(r.base_price) || 0,
+        unit: 'un',
         image: r.image || '',
         badge: r.badge || '',
         popular: Boolean(r.popular),

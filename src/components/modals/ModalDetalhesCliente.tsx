@@ -34,9 +34,9 @@ interface ModalDetalhesClienteProps {
   client: Client | null;
   isOpen: boolean;
   onClose: () => void;
-  orders: Order[];
-  quotes: Quote[];
-  transactions: Transaction[];
+  orders?: Order[];
+  quotes?: Quote[];
+  transactions?: Transaction[];
   onUpdateClient?: (updatedClient: Client) => void;
   onDeleteClient?: (clientId: string) => void;
   onOpenNovoPedidoParaCliente?: (client: Client) => void;
@@ -51,9 +51,9 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
   client,
   isOpen,
   onClose,
-  orders,
-  quotes,
-  transactions,
+  orders = [],
+  quotes = [],
+  transactions = [],
   onUpdateClient,
   onDeleteClient,
   onOpenNovoPedidoParaCliente,
@@ -72,9 +72,9 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
 
   // Edit form state
   const [name, setName] = useState(client.name || '');
-  const [whatsapp, setWhatsapp] = useState(client.whatsapp || '');
+  const [whatsapp, setWhatsapp] = useState(client.whatsapp || (client as any).phone || '');
   const [email, setEmail] = useState(client.email || '');
-  const [cpfCnpj, setCpfCnpj] = useState(client.cpfCnpj || '');
+  const [cpfCnpj, setCpfCnpj] = useState(client.cpfCnpj || (client as any).document || '');
   const [cep, setCep] = useState(client.cep || '');
   const [endereco, setEndereco] = useState(client.endereco || '');
   const [numero, setNumero] = useState(client.numero || '');
@@ -87,9 +87,9 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
   React.useEffect(() => {
     if (client) {
       setName(client.name || '');
-      setWhatsapp(client.whatsapp || '');
+      setWhatsapp(client.whatsapp || (client as any).phone || '');
       setEmail(client.email || '');
-      setCpfCnpj(client.cpfCnpj || '');
+      setCpfCnpj(client.cpfCnpj || (client as any).document || '');
       setCep(client.cep || '');
       setEndereco(client.endereco || '');
       setNumero(client.numero || '');
@@ -103,27 +103,35 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
   }, [client]);
 
   // Client-specific filtered data with safe null checking
-  const clientOrders = orders.filter(
-    (o) => o.clientId === client.id || (o.clientName && client.name && o.clientName.toLowerCase() === client.name.toLowerCase())
+  const safeOrders = Array.isArray(orders) ? orders : [];
+  const safeQuotes = Array.isArray(quotes) ? quotes : [];
+  const safeTransactions = Array.isArray(transactions) ? transactions : [];
+
+  const clientOrders = safeOrders.filter(
+    (o) => (o && o.clientId && client.id && o.clientId === client.id) || 
+           (o && o.clientName && client.name && o.clientName.toLowerCase() === client.name.toLowerCase())
   );
-  const clientQuotes = quotes.filter(
-    (q) => q.clientId === client.id || (q.clientName && client.name && q.clientName.toLowerCase() === client.name.toLowerCase())
+  const clientQuotes = safeQuotes.filter(
+    (q) => (q && q.clientId && client.id && q.clientId === client.id) || 
+           (q && q.clientName && client.name && q.clientName.toLowerCase() === client.name.toLowerCase())
   );
-  const clientTransactions = transactions.filter(
-    (t) => t.clientId === client.id || (t.clientName && client.name && t.clientName.toLowerCase() === client.name.toLowerCase())
+  const clientTransactions = safeTransactions.filter(
+    (t) => (t && t.clientId && client.id && t.clientId === client.id) || 
+           (t && t.clientName && client.name && t.clientName.toLowerCase() === client.name.toLowerCase())
   );
 
-  const totalSpentCalculated = clientOrders.reduce((sum, o) => sum + (o.total || 0), 0) || client.totalSpent || 0;
-  const ordersCountCalculated = clientOrders.length || client.ordersCount || 0;
+  const totalSpentCalculated = clientOrders.reduce((sum, o) => sum + (o.total || 0), 0) || (client as any).totalSpent || 0;
+  const ordersCountCalculated = clientOrders.length || (client as any).ordersCount || (client as any).totalOrders || 0;
   const ticketMedio = ordersCountCalculated > 0 ? totalSpentCalculated / ordersCountCalculated : 0;
   const pendingOrders = clientOrders.filter((o) => o.paymentStatus === 'pendente' || o.paymentStatus === 'parcial');
   const totalPendingAmount = pendingOrders.reduce((sum, o) => sum + ((o.total || 0) - (o.paidAmount || 0)), 0);
 
-  const cleanPhone = (client.whatsapp || '').replace(/\D/g, '');
+  const clientPhone = client.whatsapp || (client as any).phone || '';
+  const cleanPhone = clientPhone.replace(/\D/g, '');
 
   const handleCopyPhone = () => {
-    if (!client.whatsapp) return;
-    navigator.clipboard.writeText(client.whatsapp);
+    if (!clientPhone) return;
+    navigator.clipboard.writeText(clientPhone);
     setCopiedPhone(true);
     setTimeout(() => setCopiedPhone(false), 2000);
   };
@@ -184,19 +192,25 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/80 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150">
-      <div className="w-full max-w-4xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 md:p-6 bg-black/80 backdrop-blur-xs overflow-y-auto animate-in fade-in duration-150"
+      onClick={onClose}
+    >
+      <div 
+        className="w-full max-w-4xl bg-zinc-900 border border-zinc-800 rounded-2xl shadow-2xl overflow-hidden flex flex-col my-auto max-h-[92vh]"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="px-5 py-4 bg-zinc-950 border-b border-zinc-800 flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-blue-600/10 border border-blue-500/20 text-blue-400 flex items-center justify-center font-bold text-lg font-mono">
-              {client.name.charAt(0).toUpperCase()}
+              {(client.name || 'Cliente').charAt(0).toUpperCase()}
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h2 className="text-base sm:text-lg font-bold text-zinc-100">{client.name}</h2>
+                <h2 className="text-base sm:text-lg font-bold text-zinc-100">{client.name || 'Cliente'}</h2>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
-                  ID: {client.id}
+                  ID: {client.id || 'N/A'}
                 </span>
                 {ordersCountCalculated >= 3 && (
                   <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/30">
@@ -819,7 +833,7 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
                           {q.number || q.code || `Orçamento #${q.id.slice(-4)}`}
                         </div>
                         <div className="text-[11px] text-zinc-400 mt-0.5">
-                          {q.items.map((i) => `${i.quantity}x ${i.name}`).join(', ')}
+                          {(q.items || []).map((i) => `${i.quantity || 1}x ${i.name || i.productName || 'Item'}`).join(', ') || 'Sem itens descritos'}
                         </div>
                         <div className="text-[10px] text-zinc-500 mt-1">
                           Emitido em: {formatDate(q.createdAt)}
@@ -837,7 +851,7 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
                           {q.status}
                         </span>
                         <span className="font-mono font-bold text-xs text-zinc-200">
-                          {formatCurrency(q.total)}
+                          {formatCurrency(q.total || 0)}
                         </span>
                       </div>
                     </div>
@@ -898,7 +912,7 @@ export const ModalDetalhesCliente: React.FC<ModalDetalhesClienteProps> = ({
                             tx.type === 'receita' ? 'text-emerald-400' : 'text-rose-400'
                           }`}
                         >
-                          {tx.type === 'receita' ? '+' : '-'} {formatCurrency(tx.value)}
+                          {tx.type === 'receita' ? '+' : '-'} {formatCurrency(tx.value || (tx as any).amount || 0)}
                         </span>
                         <ChevronRight className="w-4 h-4 text-zinc-500" />
                       </div>

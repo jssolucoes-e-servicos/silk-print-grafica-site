@@ -69,9 +69,17 @@ export const ModalDetalhesPedido: React.FC<ModalDetalhesPedidoProps> = ({
     ]
   );
 
-  const statusConf = STATUS_CONFIG[order.status];
+  const statusConf = STATUS_CONFIG[order.status] || {
+    label: order.status,
+    text: 'text-blue-400',
+    bg: 'bg-blue-500/10',
+    border: 'border-blue-500/25',
+    badgeBg: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+    dotColor: 'bg-blue-500',
+    icon: '📦',
+  };
   const pixKey = order.pixKey || 'pix@silkprintgrafica.com.br';
-  const cleanPhone = order.clientWhatsapp.replace(/\D/g, '');
+  const cleanPhone = (order.clientWhatsapp || '').replace(/\D/g, '');
 
   const handleCopyPix = () => {
     navigator.clipboard.writeText(pixKey);
@@ -81,7 +89,7 @@ export const ModalDetalhesPedido: React.FC<ModalDetalhesPedidoProps> = ({
 
   const handleSendWhatsappTemplate = (templateType: string) => {
     let msg = '';
-    const nome = order.clientName.split(' ')[0];
+    const nome = (order.clientName || 'Cliente').split(' ')[0];
 
     switch (templateType) {
       case 'arte':
