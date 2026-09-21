@@ -1587,7 +1587,7 @@ async function startServer() {
   });
 
   // POST /api/minio/upload - Direct File Upload to MinIO
-  app.post('/api/minio/upload', upload.single('file'), async (req, res) => {
+  app.post('/api/minio/upload', upload.single('file') as any, async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ success: false, message: 'Nenhum arquivo enviado.' });
     }

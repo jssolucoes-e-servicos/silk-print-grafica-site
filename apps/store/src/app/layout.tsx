@@ -19,7 +19,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="pt-BR" className="dark">
-      <body className="bg-slate-950 text-slate-100 antialiased selection:bg-cyan-500 selection:text-black">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+      </head>
+      <body className="bg-slate-950 text-slate-100 antialiased selection:bg-cyan-500 selection:text-black font-sans">
         {children}
       </body>
     </html>
