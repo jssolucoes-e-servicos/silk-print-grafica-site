@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { MaintenancePage } from './MaintenancePage';
+import { SystemSwitcherBar } from './SystemSwitcherBar';
 import { Header } from './Header';
 import { Footer } from './Footer';
 import { ProductCard } from './ProductCard';
@@ -40,8 +41,9 @@ import {
 import { formatCurrency } from '../lib/utils';
 
 export const MasterLayout: React.FC = () => {
-  // Read maintenance mode strictly from environment variable VITE_MAINTENANCE_MODE
-  const isMaintenance = import.meta.env.VITE_MAINTENANCE_MODE === 'true';
+  // Read maintenance mode from environment variable VITE_MAINTENANCE_MODE (default: true if not explicitly 'false')
+  const envMaintenance = import.meta.env.VITE_MAINTENANCE_MODE !== 'false';
+  const [bypassMaintenance, setBypassMaintenance] = useState(false);
 
   // Application State directly from PostgreSQL database
   const [productsList, setProductsList] = useState<Product[]>([]);
@@ -60,6 +62,21 @@ export const MasterLayout: React.FC = () => {
   const [isGabaritosOpen, setIsGabaritosOpen] = useState(false);
   const [isBalcoesOpen, setIsBalcoesOpen] = useState(false);
   const [isTrackingOpen, setIsTrackingOpen] = useState(false);
+
+  // Check URL query param ?bypass=true or ?preview=store or ?preview=erp
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('bypass') === 'true' || params.get('preview')) {
+        setBypassMaintenance(true);
+        if (params.get('preview') === 'erp' || params.get('view') === 'admin') {
+          setActiveView('admin');
+        }
+      }
+    }
+  }, []);
+
+  const isMaintenance = envMaintenance && !bypassMaintenance;
 
   // Category filter on home page
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>('TODOS');
@@ -134,9 +151,17 @@ export const MasterLayout: React.FC = () => {
   const cartTotal = cartItems.reduce((acc, item) => acc + item.totalPrice, 0);
 
   // 🛑 1. MAINTENANCE MODE GATEWAY
-  // If maintenance mode is active (VITE_MAINTENANCE_MODE="true"), render ONLY the MaintenancePage
+  // If maintenance mode is active, render ONLY the MaintenancePage
   if (isMaintenance) {
-    return <MaintenancePage />;
+    return (
+      <MaintenancePage 
+        onBypass={() => setBypassMaintenance(true)}
+        onGoToErp={() => {
+          setBypassMaintenance(true);
+          setActiveView('admin');
+        }}
+      />
+    );
   }
 
   // 🛍️ 2. FULL E-COMMERCE & INSTITUTIONAL STORE
@@ -148,6 +173,15 @@ export const MasterLayout: React.FC = () => {
 
   return (
     <div className={`min-h-screen flex flex-col justify-between ${activeView === 'admin' ? 'bg-slate-950 text-slate-100' : 'bg-slate-50 text-slate-900'} selection:bg-cyan-500 selection:text-white`} id="main-site-container">
+      {/* System Switcher Bar (Visible for administration and testing) */}
+      <SystemSwitcherBar
+        activeSystem={activeView === 'admin' ? 'erp' : 'store'}
+        onSwitchToStore={() => setActiveView('home')}
+        onSwitchToErp={() => setActiveView('admin')}
+        onBackToMaintenance={envMaintenance ? () => setBypassMaintenance(false) : undefined}
+        isMaintenanceMode={envMaintenance}
+      />
+
       {/* Main Header (Hidden when in ERP system) */}
       {activeView !== 'admin' && (
         <Header

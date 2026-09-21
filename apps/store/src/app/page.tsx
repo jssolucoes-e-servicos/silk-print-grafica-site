@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { MaintenancePage } from '@/components/MaintenancePage';
 import { 
   Printer, 
   Truck, 
@@ -13,6 +14,13 @@ import {
 import { fetchCatalog } from '@/lib/api';
 
 export default async function HomePage() {
+  // Check maintenance mode: default to true unless explicitly set to 'false'
+  const isMaintenance = process.env.NEXT_PUBLIC_MAINTENANCE_MODE !== 'false';
+
+  if (isMaintenance) {
+    return <MaintenancePage />;
+  }
+
   let catalog: any = { categories: [], products: [] };
   try {
     catalog = await fetchCatalog();

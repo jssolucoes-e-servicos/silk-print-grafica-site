@@ -1,14 +1,44 @@
-import { getPrisma } from '../server/prisma';
-import { hashPassword, MASTER_ADMIN_SEED } from '../server/auth';
-import { INITIAL_ACCESS_PROFILES } from '../src/lib/permissionsEngine';
+import { PrismaClient } from '@prisma/client';
+import * as crypto from 'crypto';
+
+function hashPassword(password: string, saltHex?: string) {
+  const salt = saltHex || crypto.randomBytes(16).toString('hex');
+  const hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+  return { hash, salt };
+}
+
+const DEFAULT_PROFILES = [
+  {
+    id: 'prof-super-admin',
+    name: 'Super Administrador',
+    code: 'SUPER_ADMIN',
+    description: 'Acesso irrestrito a todas as funções, configurações e dados',
+    color: '#06b6d4',
+    icon: 'ShieldAlert',
+    isSystemDefault: true,
+    allowedPermissions: ['*'],
+    allowedScreens: ['*'],
+    allowedRoutines: ['*'],
+  },
+  {
+    id: 'prof-pcp-fabrica',
+    name: 'Operador PCP & Produção',
+    code: 'PCP_OPERATOR',
+    description: 'Gestão da esteira de produção gráfica, Kanban e expedição',
+    color: '#3b82f6',
+    icon: 'Layers',
+    isSystemDefault: true,
+    allowedPermissions: ['ORDERS_VIEW', 'ORDERS_STATUS_UPDATE', 'FACTORY_KANBAN'],
+    allowedScreens: ['kanban', 'expedicao'],
+    allowedRoutines: ['UPDATE_STATUS', 'PRINT_TAGS'],
+  },
+];
 
 async function main() {
-  const prisma = getPrisma();
+  const prisma = new PrismaClient();
   console.log('🌱 [Prisma Seed] Iniciando seed de produção mínima para o ERP SilkPrint...');
 
-  // 1. Seed Access Profiles
-  console.log('🔒 Cadastrando perfis de acesso do sistema...');
-  for (const profile of INITIAL_ACCESS_PROFILES) {
+  for (const profile of DEFAULT_PROFILES) {
     await prisma.accessProfile.upsert({
       where: { code: profile.code },
       update: {
@@ -16,7 +46,7 @@ async function main() {
         description: profile.description,
         color: profile.color,
         icon: profile.icon,
-        isSystemDefault: profile.isSystemDefault || false,
+        isSystemDefault: profile.isSystemDefault,
         allowedPermissions: profile.allowedPermissions,
         allowedScreens: profile.allowedScreens,
         allowedRoutines: profile.allowedRoutines,
@@ -28,61 +58,48 @@ async function main() {
         description: profile.description,
         color: profile.color,
         icon: profile.icon,
-        isSystemDefault: profile.isSystemDefault || false,
+        isSystemDefault: profile.isSystemDefault,
         allowedPermissions: profile.allowedPermissions,
         allowedScreens: profile.allowedScreens,
         allowedRoutines: profile.allowedRoutines,
       },
     });
   }
-  console.log(`✅ ${INITIAL_ACCESS_PROFILES.length} perfis de acesso criados/atualizados.`);
+  console.log(`✅ Perfis de acesso criados/atualizados.`);
 
-  // 2. Seed Master Admin User
-  console.log('👑 Cadastrando usuário Administrador Master...');
-  const { hash, salt } = hashPassword(MASTER_ADMIN_SEED.defaultPassword);
+  const { hash, salt } = hashPassword('silkprint@admin2026');
 
   const masterUser = await (prisma.employee as any).upsert({
-    where: { email: MASTER_ADMIN_SEED.email },
+    where: { email: 'silkprintgrafica@gmail.com' },
     update: {
-      name: MASTER_ADMIN_SEED.name,
-      whatsapp: MASTER_ADMIN_SEED.whatsapp,
-      jobTitle: MASTER_ADMIN_SEED.jobTitle,
-      department: MASTER_ADMIN_SEED.department,
-      status: MASTER_ADMIN_SEED.status,
+      name: 'Administrador Silk Print',
+      whatsapp: '5551936187210',
+      jobTitle: 'Diretor Geral',
+      department: 'Diretoria Executiva',
+      status: 'active',
       isMaster: true,
-      profileIds: MASTER_ADMIN_SEED.profileIds,
-      customPermissions: MASTER_ADMIN_SEED.customPermissions,
     },
     create: {
-      id: MASTER_ADMIN_SEED.id,
-      name: MASTER_ADMIN_SEED.name,
-      email: MASTER_ADMIN_SEED.email,
+      id: 'emp-master-001',
+      name: 'Administrador Silk Print',
+      email: 'silkprintgrafica@gmail.com',
       passwordHash: hash,
       salt: salt,
-      whatsapp: MASTER_ADMIN_SEED.whatsapp,
-      avatar: MASTER_ADMIN_SEED.avatar,
-      jobTitle: MASTER_ADMIN_SEED.jobTitle,
-      department: MASTER_ADMIN_SEED.department,
-      status: MASTER_ADMIN_SEED.status,
+      whatsapp: '5551936187210',
+      jobTitle: 'Diretor Geral',
+      department: 'Diretoria Executiva',
+      status: 'active',
       isMaster: true,
-      profileIds: MASTER_ADMIN_SEED.profileIds,
-      customPermissions: MASTER_ADMIN_SEED.customPermissions,
+      profileIds: ['prof-super-admin'],
+      customPermissions: ['*'],
     },
   });
 
   console.log(`✅ Usuário Admin Master pronto para login: ${masterUser.email}`);
-  console.log('🚀 Banco de dados limpo e preparado para início em produção (sem dados fictícios).');
+  await prisma.$disconnect();
 }
 
-main()
-  .then(async () => {
-    const prisma = getPrisma();
-    await prisma.$disconnect();
-    process.exit(0);
-  })
-  .catch(async (e) => {
-    console.error('❌ Erro no seed do Prisma:', e);
-    const prisma = getPrisma();
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+main().catch((e) => {
+  console.error('❌ Erro no seed:', e);
+  process.exit(1);
+});

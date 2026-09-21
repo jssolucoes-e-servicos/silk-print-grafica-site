@@ -1,5 +1,6 @@
+'use client';
+
 import React, { useState } from 'react';
-import { Logo } from './Logo';
 import { 
   Sparkles, 
   Clock, 
@@ -14,14 +15,12 @@ import {
   ShieldCheck,
   BellRing
 } from 'lucide-react';
-import { formatPhone } from '../lib/utils';
 
 interface MaintenancePageProps {
   onBypass?: () => void;
-  onGoToErp?: () => void;
 }
 
-export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGoToErp }) => {
+export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass }) => {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -32,11 +31,17 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
   const [lastLeadId, setLastLeadId] = useState('');
   const [error, setError] = useState('');
 
-  const whatsappNumber = import.meta.env.VITE_WHATSAPP_NUMBER || '5551936187210';
-  const contactEmail = import.meta.env.VITE_CONTACT_EMAIL || 'orcamentos@silkprintgrafica.com.br';
-  
-  // Environment flag to toggle quote form display on the maintenance screen (default: true)
-  const showForm = import.meta.env.VITE_SHOW_MAINTENANCE_FORM !== 'false';
+  const whatsappNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || '5551936187210';
+  const contactEmail = process.env.NEXT_PUBLIC_CONTACT_EMAIL || 'orcamentos@silkprintgrafica.com.br';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.silkprint.com.br/api';
+  const showForm = process.env.NEXT_PUBLIC_SHOW_MAINTENANCE_FORM !== 'false';
+
+  const formatPhone = (val: string) => {
+    const raw = val.replace(/\D/g, '').slice(0, 11);
+    if (raw.length <= 2) return raw;
+    if (raw.length <= 7) return `(${raw.slice(0, 2)}) ${raw.slice(2)}`;
+    return `(${raw.slice(0, 2)}) ${raw.slice(2, 7)}-${raw.slice(7)}`;
+  };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPhone(formatPhone(e.target.value));
@@ -83,17 +88,13 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
 
     try {
       // 1. Submit lead to server route
-      const response = await fetch('/api/quotes', {
+      const response = await fetch(`${apiUrl}/quotes`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(leadPayload),
       });
 
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.message || 'Erro ao processar sua solicitação.');
-      }
+      const result = await response.json().catch(() => ({}));
 
       setLastLeadId(result.leadId || `ORC-${Date.now().toString().slice(-6)}`);
       setIsSubmitted(true);
@@ -120,8 +121,7 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
         }, 600);
       }
     } catch (err: unknown) {
-      console.warn('API route fallback triggered:', err);
-      // Fallback: If offline or API fails, still allow WhatsApp opening
+      console.warn('API fallback to direct WhatsApp:', err);
       if (channel === 'whatsapp') {
         const cleanAdminPhone = whatsappNumber.replace(/\D/g, '');
         const waMsg = 
@@ -132,7 +132,7 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
         window.open(`https://wa.me/${cleanAdminPhone}?text=${encodeURIComponent(waMsg)}`, '_blank');
         setIsSubmitted(true);
       } else {
-        setError(err instanceof Error ? err.message : 'Falha ao enviar formulário. Tente novamente ou use o WhatsApp direto.');
+        setError('Falha ao conectar com o servidor. Envie seu orçamento direto pelo WhatsApp de plantão.');
       }
     } finally {
       setIsSubmitting(false);
@@ -148,36 +148,29 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
 
       {/* Top Bar with Logo */}
       <header className="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <Logo variant="full" size="md" theme="dark" />
-
-        <div className="flex items-center gap-2">
-          {onBypass && (
-            <button
-              onClick={onBypass}
-              type="button"
-              className="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-800 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5"
-              title="Prévia interna da Loja Virtual (somente administrador)"
-            >
-              <span>Prévia da Loja</span>
-            </button>
-          )}
-          {onGoToErp && (
-            <button
-              onClick={onGoToErp}
-              type="button"
-              className="px-3 py-1.5 rounded-lg bg-cyan-950/80 hover:bg-cyan-900/80 border border-cyan-800/60 text-cyan-300 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5"
-              title="Acessar o ERP Industrial Silk Print"
-            >
-              <span>Acessar ERP</span>
-            </button>
-          )}
+        <div className="flex items-center gap-2 font-black text-xl tracking-tight text-white">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
+            <Printer className="w-5 h-5" />
+          </div>
+          <span>SILK<span className="text-cyan-400">PRINT</span></span>
+          <span className="text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 ml-2">
+            GRÁFICA
+          </span>
         </div>
+
+        {onBypass && (
+          <button
+            onClick={onBypass}
+            className="text-[11px] font-mono text-slate-500 hover:text-slate-300 transition-colors"
+          >
+            [Acesso Restrito]
+          </button>
+        )}
       </header>
 
       {/* Main Content Area */}
       <main className="max-w-6xl w-full mx-auto px-4 sm:px-6 py-10 sm:py-16 flex-1 flex flex-col justify-center">
         {showForm ? (
-          /* Dual-Column Layout: Notice + Form */
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 items-center">
             
             {/* Left Column: Notice & Brand Info */}
@@ -188,7 +181,7 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
               </div>
 
               <div className="space-y-3">
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-heading text-white tracking-tight leading-tight">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
                   Estamos preparando novidades para você!
                 </h1>
                 <p className="text-slate-300 text-base sm:text-lg leading-relaxed">
@@ -198,15 +191,15 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
 
               {/* Status highlights */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="p-3.5 rounded-xl bg-slate-850 border border-slate-800 flex items-start gap-3">
+                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-start gap-3">
                   <Clock className="w-5 h-5 text-cyan-400 shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-sm font-semibold text-white">Retorno Previsto</h4>
-                    <p className="text-xs text-slate-400 mt-0.5">Em poucas horas o sistema estará 100% normalizado.</p>
+                    <p className="text-xs text-slate-400 mt-0.5">Em breve o sistema estará 100% normalizado.</p>
                   </div>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-slate-850 border border-slate-800 flex items-start gap-3">
+                <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 flex items-start gap-3">
                   <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
                   <div>
                     <h4 className="text-sm font-semibold text-white">Produção Ativa</h4>
@@ -250,7 +243,7 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
               <div className="bg-slate-900/95 rounded-2xl border border-slate-800 p-6 sm:p-8 shadow-2xl backdrop-blur-xl relative">
                 <div className="flex items-center justify-between mb-5">
                   <div>
-                    <h3 className="text-xl font-bold text-white font-heading flex items-center gap-2">
+                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
                       <Printer className="w-5 h-5 text-cyan-400" />
                       <span>Fazer Orçamento Rápido</span>
                     </h3>
@@ -273,7 +266,7 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
                     {lastLeadId && (
                       <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-800/80 border border-slate-700 text-[11px] text-slate-400">
                         <BellRing className="w-3.5 h-3.5 text-cyan-400" />
-                        <span>Protocolo: <strong className="text-slate-200">{lastLeadId}</strong> • Notificação disparada ao administrador</span>
+                        <span>Protocolo: <strong className="text-slate-200">{lastLeadId}</strong></span>
                       </div>
                     )}
 
@@ -292,7 +285,6 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit} className="space-y-4" id="maintenance-quote-form">
-                    {/* Channel Selector */}
                     <div className="grid grid-cols-2 gap-2 p-1 bg-slate-950 rounded-xl border border-slate-800 text-xs">
                       <button
                         type="button"
@@ -329,7 +321,6 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
                       </div>
                     )}
 
-                    {/* Nome */}
                     <div>
                       <label className="block text-xs font-semibold text-slate-300 mb-1" htmlFor="input-maintenance-name">
                         Seu Nome Completo *
@@ -348,7 +339,6 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
                       />
                     </div>
 
-                    {/* Telefone & Email */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-xs font-semibold text-slate-300 mb-1" htmlFor="input-maintenance-phone">
@@ -382,14 +372,13 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
                       </div>
                     </div>
 
-                    {/* Campo Único de Descrição do Orçamento */}
                     <div>
                       <div className="flex items-center justify-between mb-1">
                         <label className="block text-xs font-semibold text-slate-200" htmlFor="textarea-maintenance-description">
                           O que você deseja orçar? *
                         </label>
                         <span className="text-[10px] text-slate-400 font-medium">
-                          Descreva material, tiragem e medidas
+                          Material, tiragem e medidas
                         </span>
                       </div>
                       <textarea
@@ -438,7 +427,7 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
 
                     <div className="flex items-center justify-center gap-2 text-[11px] text-slate-400 pt-1 text-center">
                       <ShieldCheck className="w-3.5 h-3.5 text-cyan-400 shrink-0" />
-                      <span>Seus dados são enviados diretamente à nossa central de orçamento com aviso imediato ao administrador.</span>
+                      <span>Seus dados são enviados diretamente à nossa central de orçamento.</span>
                     </div>
                   </form>
                 )}
@@ -447,7 +436,6 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
 
           </div>
         ) : (
-          /* Centered Announcement Layout (when form is disabled via VITE_SHOW_MAINTENANCE_FORM=false) */
           <div className="max-w-3xl mx-auto w-full text-center space-y-8 py-6">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-800/90 border border-slate-700 text-cyan-400 text-xs font-semibold mx-auto">
               <Sparkles className="w-4 h-4 text-cyan-400" />
@@ -455,7 +443,7 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
             </div>
 
             <div className="space-y-4">
-              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold font-heading text-white tracking-tight leading-tight">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-tight">
                 Estamos preparando novidades para você!
               </h1>
               <p className="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
@@ -463,58 +451,27 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
               </p>
             </div>
 
-            {/* Status cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto text-left pt-2">
-              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-start gap-3.5 shadow-xl">
-                <Clock className="w-6 h-6 text-cyan-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-bold text-white">Retorno Previsto</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">Em poucas horas o sistema estará 100% normalizado.</p>
-                </div>
-              </div>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <a
+                href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Olá! Gostaria de fazer um orçamento com a Silk Print Gráfica.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-950/50"
+                id="btn-direct-wa-centered"
+              >
+                <MessageCircle className="w-5 h-5 fill-current" />
+                <span>Falar no WhatsApp Agora</span>
+                <ExternalLink className="w-4 h-4 opacity-70" />
+              </a>
 
-              <div className="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 flex items-start gap-3.5 shadow-xl">
-                <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0 mt-0.5" />
-                <div>
-                  <h4 className="text-sm font-bold text-white">Produção Gráfica Ativa</h4>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">Nossas máquinas offset e digitais continuam rodando normalmente.</p>
-                </div>
-              </div>
-            </div>
-
-            {/* Direct Contact Actions */}
-            <div className="p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-slate-800/80 max-w-2xl mx-auto shadow-2xl backdrop-blur-md space-y-4">
-              <div>
-                <h3 className="text-base font-bold text-white font-heading">
-                  Precisa de orçamento imediato ou atendimento de plantão?
-                </h3>
-                <p className="text-xs text-slate-400 mt-1">
-                  Nossos consultores estão online atendendo diretamente pelo WhatsApp e E-mail.
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-                <a
-                  href={`https://wa.me/${whatsappNumber}?text=${encodeURIComponent('Olá! Gostaria de fazer um orçamento com a Silk Print Gráfica.')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm transition-all shadow-lg shadow-emerald-950/50"
-                  id="btn-direct-wa-centered"
-                >
-                  <MessageCircle className="w-5 h-5 fill-current" />
-                  <span>Falar no WhatsApp Agora</span>
-                  <ExternalLink className="w-4 h-4 opacity-70" />
-                </a>
-
-                <a
-                  href={`mailto:${contactEmail}`}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-sm transition-all"
-                  id="btn-direct-email-centered"
-                >
-                  <Mail className="w-5 h-5 text-cyan-400" />
-                  <span>{contactEmail}</span>
-                </a>
-              </div>
+              <a
+                href={`mailto:${contactEmail}`}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-sm transition-all"
+                id="btn-direct-email-centered"
+              >
+                <Mail className="w-5 h-5 text-cyan-400" />
+                <span>{contactEmail}</span>
+              </a>
             </div>
           </div>
         )}
@@ -532,4 +489,3 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass, onGo
     </div>
   );
 };
-export default MaintenancePage;
