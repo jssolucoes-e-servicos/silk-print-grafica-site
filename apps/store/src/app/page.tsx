@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { MaintenancePage } from '@/components/MaintenancePage';
+import { Logo } from '@/components/Logo';
 import { 
   Printer, 
   Truck, 
@@ -38,11 +39,8 @@ export default async function HomePage() {
       {/* Header Principal da Loja */}
       <header className="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2 font-black text-xl tracking-tight text-white">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
-              <Printer className="w-5 h-5" />
-            </div>
-            <span>SILK<span className="text-cyan-400">PRINT</span></span>
+          <Link href="/" className="flex items-center">
+            <Logo variant="full" size="md" theme="dark" />
           </Link>
 
           <div className="hidden md:flex flex-1 max-w-md mx-8 relative">

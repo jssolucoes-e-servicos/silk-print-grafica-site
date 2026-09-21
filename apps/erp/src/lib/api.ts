@@ -1,5 +1,6 @@
 import { Product, Category, BalcaoRetirada, CatalogData, Order, Coupon, SiteInfo } from '../types';
 import { createCuid } from './cuid';
+import { CATALOG_PRODUCTS } from '../data/mockData';
 
 const API_BASE = '/api';
 
@@ -26,10 +27,13 @@ export async function getCatalog(): Promise<CatalogData> {
     if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     const json = await res.json();
     if (json.data) {
+      const prods = (json.data.products && json.data.products.length > 0) 
+        ? json.data.products 
+        : CATALOG_PRODUCTS;
       return {
         siteInfo: json.data.site || DEFAULT_SITE_INFO,
         categories: json.data.categories || [],
-        products: json.data.products || [],
+        products: prods,
         pickupPoints: json.data.pickupPoints || [],
         coupons: json.data.coupons || []
       };
@@ -37,7 +41,7 @@ export async function getCatalog(): Promise<CatalogData> {
     return {
       siteInfo: DEFAULT_SITE_INFO,
       categories: [],
-      products: [],
+      products: CATALOG_PRODUCTS,
       pickupPoints: [],
       coupons: []
     };
@@ -46,7 +50,7 @@ export async function getCatalog(): Promise<CatalogData> {
     return {
       siteInfo: DEFAULT_SITE_INFO,
       categories: [],
-      products: [],
+      products: CATALOG_PRODUCTS,
       pickupPoints: [],
       coupons: []
     };

@@ -13,6 +13,7 @@ import {
 import {
   INITIAL_ACCESS_PROFILES,
 } from '../src/lib/permissionsEngine';
+import { CATALOG_PRODUCTS as INITIAL_PRODUCTS } from '../src/data/mockData';
 import { isPostgresReady, executeSqlQuery } from './db';
 import { hashPassword, MASTER_ADMIN_SEED } from './auth';
 
@@ -87,12 +88,17 @@ function initStore() {
         }
       }
 
+      let loadedProducts = parsed.products || [];
+      if (loadedProducts.length === 0) {
+        loadedProducts = [...INITIAL_PRODUCTS];
+      }
+
       store = {
         clients: parsed.clients || [],
         orders: parsed.orders || [],
         quotes: parsed.quotes || [],
         transactions: parsed.transactions || [],
-        products: parsed.products || [],
+        products: loadedProducts,
         finishings: parsed.finishings || [],
         employees: loadedEmployees,
         accessProfiles: (parsed.accessProfiles && parsed.accessProfiles.length > 0) ? parsed.accessProfiles : [...INITIAL_ACCESS_PROFILES],

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { Logo } from './Logo';
 import { 
   Sparkles, 
   Clock, 
@@ -148,15 +149,7 @@ export const MaintenancePage: React.FC<MaintenancePageProps> = ({ onBypass }) =>
 
       {/* Top Bar with Logo */}
       <header className="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
-        <div className="flex items-center gap-2 font-black text-xl tracking-tight text-white">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-cyan-500 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-cyan-500/20">
-            <Printer className="w-5 h-5" />
-          </div>
-          <span>SILK<span className="text-cyan-400">PRINT</span></span>
-          <span className="text-[10px] uppercase font-mono tracking-widest px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 ml-2">
-            GRÁFICA
-          </span>
-        </div>
+        <Logo variant="full" size="md" theme="dark" />
 
         {onBypass && (
           <button
